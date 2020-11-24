@@ -1,0 +1,10 @@
+
+buy_price = []
+buy_date = []
+buy_unit = []
+sell_price = []
+sell_date = []
+sell_unit = []
+order_queue = []
+order_execute = []
+position_list = [0]
