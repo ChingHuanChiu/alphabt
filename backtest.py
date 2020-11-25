@@ -1,6 +1,6 @@
 import pandas as pd
 
-from broker import Broker
+from broker import *
 from strategy import Strategy
 
 
@@ -12,15 +12,17 @@ class Backtest:
         self.Broker = Broker(self.Strategy.equity)
 
     def run(self):
-        for i in range(len(self.data)):
+        for i in range(len(self.data) - 1):
             self.Strategy.signal(i)
             self.Broker.check_order(self.data.iloc[i + 1, :], date=self.data.index[i + 1])
 
             self.Broker.work(self.data.iloc[i + 1, :])
 
-        log = self.Broker.get_log()
-        return log
+        if self.Strategy.position != 0:
+            self.Broker.liquidation(pos=-self.Strategy.position, price=data.open[-1])
 
+        record = self.Broker.get_log()
+        return record
 
 
 if __name__ == '__main__':

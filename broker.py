@@ -8,14 +8,13 @@ class Broker:
     def __init__(self, equity):
         self.equity = equity
 
-        self.execute = Execute(self.equity) # Execute
-        # order_queue = [] # Because the list must be clear per signal, the list is not in accessor
-        # self.order_execute = []
+        self.execute = Execute(self.equity)  # Execute
 
     def make_order(self, unit, limit_price, stop_loss):
         order_queue.append(Order(unit, limit_price, stop_loss))
 
     def check_order(self, ohlc, date):
+        # buy in open price
         op = ohlc.open
         print('order_queue', order_queue, date)
         for o in order_queue:
@@ -50,6 +49,14 @@ class Broker:
         price: Series with columns: Open, Close, High, Low
         """
         self.execute.trading(price)
+
+    def liquidation(self, pos, price):
+        """
+        clean the last position
+        """
+        o = Order(-1 * pos, imit_price=None, stop_loss=None)
+        order_execute.append(o)
+        self.work(price=price)
 
     def get_log(self):
         print(pd.Series(buy_date))
@@ -111,3 +118,6 @@ def position(size):
     except:
         position.pos = size
     return position.pos
+
+
+
