@@ -16,11 +16,11 @@ class Strategy(metaclass=ABCMeta):
 
     def buy(self, unit=1, limit_price=None, stop_loss=None):
 
-        Broker(self.equity).make_order(unit=unit, limit_price=limit_price, stop_loss=stop_loss)
+        Broker(self.init_capital).make_order(unit=unit, limit_price=limit_price, stop_loss=stop_loss)
 
     def sell(self, unit=-1, limit_price=None, stop_loss=None):
 
-        Broker(self.equity).make_order(unit=unit, limit_price=limit_price, stop_loss=stop_loss)
+        Broker(self.init_capital).make_order(unit=unit, limit_price=limit_price, stop_loss=stop_loss)
 
     def indicator(self, name, timeperiod):
 

@@ -59,22 +59,16 @@ class Broker:
         self.work(price=price)
 
     def get_log(self):
-        print(pd.Series(buy_date))
-        print(pd.Series(buy_price))
-        print(pd.Series(buy_unit))
-        print(pd.Series(sell_price))
-        print(pd.Series(sell_date))
-        print(pd.Series(sell_unit))
+
         log = pd.DataFrame({'BuyDate': buy_date, 'BuyPrice': buy_price, 'BuyUnits': buy_unit, 'SellDate': sell_date,
                             'SellPrice': sell_price, 'SellUnits': sell_unit})
+
         return log
 
 
 class Execute:
     def __init__(self, equity):
         self.equity = equity
-        # self.position = 0
-        # self.log_dict = defaultdict(list)
 
     def trading(self, price):
         h = price.high
