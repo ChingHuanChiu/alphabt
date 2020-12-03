@@ -1,14 +1,15 @@
 import pandas as pd
 import statistic
+from plot import get_plotly
 from broker import *
-from strategy import Strategy
 
 
-class Backtest:
-    def __init__(self, strategy, data):
-        self.data = data
-        self.data.columns = [i.lower() for i in self.data.columns]
+class Bt:
+    def __init__(self, strategy):
+        # self.data = data
+
         self.Strategy = strategy()
+        self.data = self.Strategy.data
         self.Broker = Broker(self.Strategy.init_capital)
 
     def run(self):
@@ -19,13 +20,19 @@ class Backtest:
             self.Broker.work(self.data.iloc[i + 1, :])
 
         if self.Strategy.position != 0:
-            self.Broker.liquidation(pos=-self.Strategy.position, price=data.open[-1])
+            self.Broker.liquidation(pos=-self.Strategy.position, price=self.data.open[-1])
 
         record = self.Broker.get_log()
 
         report, performance = Report(self.data, record, self.Strategy.init_capital).result()
 
+
+
         return report, performance
+
+    def get_plot(self, subplot_technical_index: list, overlap=None, sub_plot_param=None, overlap_param=None, log=None):
+        get_plotly(self.data, subplot_technical_index, overlap=overlap, sub_plot_param=sub_plot_param
+                   , overlap_param=overlap_param, log=log)
 
 
 class Report:
@@ -92,7 +99,7 @@ class Report:
             performance_df.index = [y]
             out_put = pd.concat([out_put, performance_df])
 
-        print(out_put)
+        # print(out_put)
         out_put['年化報酬率(%)'] = statistic.geo_yearly_ret(out_put)
         out_put['大盤年化報酬率(%)'] = statistic.index_geo_yearly_ret(self.df, out_put, index='^GSPC')
         print('Sharpe Ratio is :', statistic.year_sharpe(out_put))
@@ -101,28 +108,3 @@ class Report:
     def result(self):
         return self.report(), self.yearly_performance()
 
-
-if __name__ == '__main__':
-    from strategy import Strategy
-
-    data = pd.read_pickle('sp500.pkl')
-    data = data[data.symbol == 'AAPL']
-
-
-    class Test(Strategy):
-        def __init__(self):
-            self.data = data
-            self.init_capital = 100000
-            self.ma = self.indicator('MA', [5, 10])
-
-        def signal(self, index):
-            print('pos', self.position)
-            print('buy', (self.ma['5MA'][index] > self.ma['10MA'][index]) & (self.position == 0))
-            print('sell', (self.ma['10MA'][index] > self.ma['5MA'][index]) & (self.position > 0))
-            if (self.ma['5MA'][index] > self.ma['10MA'][index]) & (self.position == 0):
-                self.buy()
-            if (self.ma['10MA'][index] > self.ma['5MA'][index]) & (self.position > 0):
-                self.sell()
-
-
-    log, per = Backtest(Test, data).run()

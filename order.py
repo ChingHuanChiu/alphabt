@@ -33,23 +33,8 @@ class Order:
     def trading_prices(self, price):
         return price
 
-    # @property
-    # def trading_date(self):
-    #     return self.trading_date
-    #
-    # @trading_date.setter
-    # def trading_date(self, date):
-    #     return date
-
     def replace(self, unit, trading_price):
         setattr(self, 'unit', unit)
         setattr(self, 'trading_price', trading_price)
 
 
-if __name__ == '__main__':
-    """
-    test accessor
-    """
-    # from accessor import *
-    position = position + 9
-    buy_date.append(77)

@@ -16,7 +16,7 @@ class Broker:
     def check_order(self, ohlc, date):
         # buy in open price
         op = ohlc.open
-        print('order_queue', order_queue, date)
+        # print('order_queue', order_queue, date)
         for o in order_queue:
 
             if o.limit_price:
@@ -42,7 +42,7 @@ class Broker:
 
             order_execute.append(o)
         order_queue.clear()
-        print('after order_queue', order_queue, date)
+        # print('after order_queue', order_queue, date)
 
     def work(self, price):
         """
@@ -59,10 +59,12 @@ class Broker:
         self.work(price=price)
 
     def get_log(self):
+        log_dict = {'BuyDate': buy_date, 'BuyPrice': buy_price, 'BuyUnits': buy_unit, 'SellDate': sell_date,
+                            'SellPrice': sell_price, 'SellUnits': sell_unit}
+        log = pd.DataFrame(log_dict)
 
-        log = pd.DataFrame({'BuyDate': buy_date, 'BuyPrice': buy_price, 'BuyUnits': buy_unit, 'SellDate': sell_date,
-                            'SellPrice': sell_price, 'SellUnits': sell_unit})
-
+        for i in list(log_dict.values()):
+            i.clear()
         return log
 
 
@@ -76,7 +78,7 @@ class Execute:
         for t in order_execute:
             if t.is_long:
                 assert self.equity >= t.trading_price * t.units
-                print(t.trading_price)
+                # print(t.trading_price)
                 buy_price.append(t.trading_price)
                 buy_date.append(t.trading_date)
                 buy_unit.append(t.units)

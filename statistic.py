@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-
+from talib import abstract
 
 def annual_profit(record_df_year):
     return [round((record_df_year['profit(元)'].sum()), 2)]
@@ -182,3 +182,45 @@ def realized_pl(trade, daily_log):
         elif (daily_log['部位'].values[i] <= 0) & (daily_log['部位'].values[i - 1] > 0):
             x[i] = trade[i] - trade[i - 1]
     return x
+
+
+def indicator(data, name, timeperiod=None):
+    data.columns = [i.lower() for i in data.columns]
+    O = data.loc[:, 'open'].astype('float')
+    H = data.loc[:, 'high'].astype('float')
+    L = data.loc[:, 'low'].astype('float')
+    C = data.loc[:, 'close'].astype('float')
+    V = data.loc[:, 'volume'].astype('float')
+    OHLCV = {'open': O, 'high': H, 'low': L, 'close': C, 'volume': V}
+
+    ret = pd.DataFrame(index=data.index)
+    if timeperiod is not None:
+        for t in timeperiod:
+            f = getattr(abstract, name)
+            output_names = f.output_names
+            s = f(OHLCV, timeperiod=t)
+            s = pd.to_numeric(s, errors='coerce')
+
+            if len(output_names) == 1:
+                dic = s
+                s_df = pd.DataFrame(dic, index=data.index,
+                                    columns=['{}'.format(t) + name])  # 當output_names=1時，s為array
+            else:
+                s = s.T
+                output_names_col = [f'{n}_{str(t)}' for n in output_names]
+                s_df = pd.DataFrame(s, index=data.index, columns=output_names_col)  # 當output_names>1時，s為list
+            ret = pd.concat([ret, s_df], axis=1)
+    else:
+        f = getattr(abstract, name)
+        output_names = f.output_names
+        s = f(OHLCV)
+        s = pd.to_numeric(s, errors='coerce')
+        if len(output_names) == 1:
+            dic = s
+            s_df = pd.DataFrame(dic, index=data.index, columns=[name])
+        else:
+            s = s.T
+            s_df = pd.DataFrame(s, index=data.index, columns=output_names)
+
+        ret = pd.concat([ret, s_df], axis=1)
+    return ret
