@@ -48,14 +48,19 @@ class Broker:
         """
         price: Series with columns: Open, Close, High, Low
         """
+        # print(type(price), price)
+
         self.execute.trading(price)
 
-    def liquidation(self, pos, price):
+    def liquidation(self, pos, price, date):
         """
         clean the last position
         """
-        o = Order(-1 * pos, imit_price=None, stop_loss=None)
+        o = Order(-1 * pos, limit_price=None, stop_loss=None)
+        setattr(o, 'trading_price', price.open)
+        setattr(o, 'trading_date', date)
         order_execute.append(o)
+
         self.work(price=price)
 
     def get_log(self):
@@ -76,6 +81,7 @@ class Execute:
         h = price.high
         c = price.close
         for t in order_execute:
+
             if t.is_long:
                 assert self.equity >= t.trading_price * t.units
                 # print(t.trading_price)

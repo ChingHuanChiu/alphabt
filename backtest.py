@@ -13,20 +13,20 @@ class Bt:
         self.Broker = Broker(self.Strategy.init_capital)
 
     def run(self):
-        for i in range(len(self.data) - 1):
+        for i in range(1, len(self.data) - 1):
+
             self.Strategy.signal(i)
             self.Broker.check_order(self.data.iloc[i + 1, :], date=self.data.index[i + 1])
 
             self.Broker.work(self.data.iloc[i + 1, :])
 
         if self.Strategy.position != 0:
-            self.Broker.liquidation(pos=-self.Strategy.position, price=self.data.open[-1])
+
+            self.Broker.liquidation(pos=self.Strategy.position, price=self.data.iloc[-1, :], date=self.data.index[-1])
 
         record = self.Broker.get_log()
 
         report, performance = Report(self.data, record, self.Strategy.init_capital).result()
-
-
 
         return report, performance
 
@@ -44,7 +44,7 @@ class Report:
     def report(self):
         trading_df = self.log
 
-        assert trading_df.empty != 'True', 'Your Strategy may have no sell(buy) signal!!'
+        assert trading_df.empty != True, 'Your Strategy may have no sell(buy) signal!!'
 
         trading_df['SellDate'] = pd.to_datetime(trading_df['SellDate'])
         trading_df['BuyDate'] = pd.to_datetime(trading_df['BuyDate'])
@@ -65,11 +65,13 @@ class Report:
 
     def yearly_performance(self):
         record_df = self.log.copy()
+
         record_df['return'] = record_df['報酬率(%)'] / 100
 
         out_put = pd.DataFrame()
         count = 0
         for y in record_df['SellDate'].dt.year.unique():
+
             performance_df = pd.DataFrame()
 
             record_df_year = record_df[record_df['SellDate'].dt.year == y]
