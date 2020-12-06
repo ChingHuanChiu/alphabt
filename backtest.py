@@ -14,7 +14,7 @@ class Bt:
 
     def run(self):
         for i in range(1, len(self.data) - 1):
-
+            
             self.Strategy.signal(i)
             self.Broker.check_order(self.data.iloc[i + 1, :], date=self.data.index[i + 1])
 
@@ -103,7 +103,7 @@ class Report:
 
         # print(out_put)
         out_put['年化報酬率(%)'] = statistic.geo_yearly_ret(out_put)
-        out_put['大盤年化報酬率(%)'] = statistic.index_geo_yearly_ret(self.df, out_put, index='^GSPC')
+#         out_put['大盤年化報酬率(%)'] = statistic.index_geo_yearly_ret(self.df, out_put, index='^GSPC')
         print('Sharpe Ratio is :', statistic.year_sharpe(out_put))
         return out_put
 
