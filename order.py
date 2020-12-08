@@ -34,10 +34,10 @@ class Order:
     def trading_prices(self, price):
         self.trading_price = price
         
-        
+
     @property
     def stop_loss_prices(self):
-        return self. stop_loss_price
+        return self.stop_loss_price
     
     @stop_loss_prices.setter
     def stop_loss_prices(self, price):
@@ -54,11 +54,13 @@ class Order:
     def is_trades(self, status):
         self.is_trade = status
 
-    def replace(self, amount, trading_price, status):
-        del order_execute[0] # cancel the old order
+    def replace(self, amount, trading_price, date, status):
+        del order_execute[-1]  # cancel the old order
         setattr(self, 'units', amount)
         setattr(self, 'trading_prices', trading_price)
+        setattr(self, 'trading_date', date)
         setattr(self, 'is_trades', status)
-        order_execute.insert(0, self)
+        self.stop_loss = None
+        order_execute.append(self)
 
 

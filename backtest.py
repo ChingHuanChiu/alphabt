@@ -18,7 +18,7 @@ class Bt:
             self.Strategy.signal(i)
             self.Broker.check_order(self.data.iloc[i + 1, :], date=self.data.index[i + 1])
 
-            self.Broker.work(self.data.iloc[i + 1, :])
+            self.Broker.work(self.data.iloc[i + 1, :], date=self.data.index[i + 1])
 
         if self.Strategy.position != 0:
 

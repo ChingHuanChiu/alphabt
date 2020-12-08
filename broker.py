@@ -45,13 +45,13 @@ class Broker:
         order_queue.clear()
         # print('after order_queue', order_queue, date)
 
-    def work(self, price):
+    def work(self, price, date):
         """
         price: Series with columns: Open, Close, High, Low
         """
         # print(type(price), price)
 
-        self.execute.trading(price)
+        self.execute.trading(price, date)
 
     def liquidation(self, pos, price, date):
         """
@@ -62,16 +62,17 @@ class Broker:
         setattr(o, 'trading_date', date)
         order_execute.append(o)
 
-        self.work(price=price)
+        self.work(price=price, date=date)
 
     def get_log(self):
         log_dict = {'BuyDate': buy_date, 'BuyPrice': buy_price, 'BuyUnits': buy_unit, 'SellDate': sell_date,
                             'SellPrice': sell_price, 'SellUnits': sell_unit}
-        print(len(buy_date), len(sell_date))
+        # print(len(buy_date), len(sell_date))
         log = pd.DataFrame(log_dict)
 
         for i in list(log_dict.values()):
             i.clear()
+
         return log
 
 
@@ -79,16 +80,15 @@ class Execute:
     def __init__(self, equity):
         self.equity = equity
 
-    def trading(self, price):
+    def trading(self, price, date):
         h = price.high
         c = price.close
         for t in order_execute:
-           
-                
+
                 
             if t.is_long and t.is_trade==False:
                
-                print(self.equity, t.trading_price, t.units, t.trading_price * t.units)
+                # print(self.equity, t.trading_price, t.units, t.trading_price * t.units)
                 assert self.equity >= t.trading_price * t.units
                 
                 # print(t.trading_price)
@@ -113,11 +113,14 @@ class Execute:
             else:
                 continue
                 
-            if t.is_long and t.stop_loss and c <= t.stop_loss_price and t.is_trade == True: 
-                t.replace(-t.units, t.stop_loss_price, False)
+            if t.is_long and t.stop_loss and c <= t.stop_loss_price and t.is_trade == True:
+                print('in long')
+                # print(price)
+                t.replace(-t.units, t.stop_loss_price, date, False)
                 
             elif t.is_short and t.stop_loss and c >= t.stop_loss_price and t.is_trade == True:
-                t.replace(t.units, t.stop_loss_price, False)
+                print('in short')
+                t.replace(t.units, t.stop_loss_price, date, False)
 
 
 def position(size):
