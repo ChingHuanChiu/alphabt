@@ -25,9 +25,13 @@ class Strategy(metaclass=ABCMeta):
 
         return statistic.indicator(self.data, name, timeperiod)
 
-
     @property
     def position(self):
         return position_list[-1]
+
+    @property
+    def close_position(self):
+
+        Broker(self.init_capital).make_order(unit=-1 * position_list[-1], limit_price=None, stop_loss=None)
 
 
