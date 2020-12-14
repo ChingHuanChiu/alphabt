@@ -7,9 +7,8 @@ import numpy as np
 
 class Broker:
     def __init__(self, equity):
-        self.equity = equity
 
-        self.execute = Execute(self.equity)  # Execute
+        self.execute = Execute(equity)  # Execute
 
     def make_order(self, unit, limit_price, stop_loss):
         order_queue.append(Order(unit, limit_price, stop_loss))
@@ -30,13 +29,12 @@ class Broker:
             setattr(o, 'trading_price', trading_price)
             setattr(o, 'trading_date', date)
 
-            size = None
             if o.is_long and 1 > o.units > 0:
-                size = int((self.equity * o.units) / trading_price)
+                size = int((self.execute.equity * o.units) / trading_price)
+                print('size', size)
                 setattr(o, 'units', size)
             elif o.is_short and position_list[-1] > 1:
                 setattr(o, 'units', -position_list[-1])
-
 
             # check stop loss condition
             # stop loss is ratio
@@ -56,10 +54,11 @@ class Broker:
             FIFO_order = []
 
             if order_execute and abs(o.units) != abs(order_execute[-1].units) and \
-                    np.sign(o.units) != np.sign(order_execute[-1].units):
+                    np.sign(o.units) != np.sign(order_execute[-1].units) and position_list[-1] != 0:
                 print(o.units, order_execute[-1].units)
                 print("FIFO Process")
-                for n, t in order_execute[::-1]:
+                print(order_execute)
+                for t in order_execute[::-1]:
                     if np.sign(t.units) != np.sign(o.units):
                         setattr(o, 'units', -t.units)
                         FIFO_order.insert(0, o)
