@@ -1,4 +1,3 @@
-from collections import defaultdict
 from accessor import *
 from order import Order
 import pandas as pd
@@ -53,11 +52,11 @@ class Broker:
             # change the order to match the FIFO process
             FIFO_order = []
 
-            if order_execute and abs(o.units) != abs(order_execute[-1].units) and \
+            if order_execute and (abs(o.units) != abs(order_execute[-1].units))and \
                     np.sign(o.units) != np.sign(order_execute[-1].units) and position_list[-1] != 0:
-                print(o.units, order_execute[-1].units)
-                print("FIFO Process")
-                print(order_execute)
+                # print(o.units, order_execute[-1].units)
+                # print("FIFO Process")
+                # print(order_execute)
                 for t in order_execute[::-1]:
                     if np.sign(t.units) != np.sign(o.units):
                         setattr(o, 'units', -t.units)
@@ -66,6 +65,7 @@ class Broker:
                         break
 
             if FIFO_order:
+                print(len(FIFO_order))
                 order_execute.extend(FIFO_order)
             else:
                 order_execute.append(o)
@@ -94,7 +94,10 @@ class Broker:
     def get_log(self):
         log_dict = {'BuyDate': buy_date, 'BuyPrice': buy_price, 'BuyUnits': buy_unit, 'SellDate': sell_date,
                     'SellPrice': sell_price, 'SellUnits': sell_unit}
-        # print(len(buy_date), len(sell_date))
+        print(len(buy_date), len(sell_date))
+        print(buy_date)
+        print('----------------')
+        print(sell_date)
         log = pd.DataFrame(log_dict)
 
         for i in list(log_dict.values()):
