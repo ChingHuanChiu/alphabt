@@ -1,12 +1,14 @@
 from accessor import *
+import numpy as np
 class Order:
-    def __init__(self, unit, limit_price, stop_loss, trading_date=None, is_fill=False):
+    def __init__(self, unit, limit_price, stop_loss, trading_date=None, is_fill=False, is_parent=True):
         self._unit = unit
 
         self.limit_price = limit_price
         self.stop_loss = stop_loss
         self.trading_date = trading_date
         self.is_fill = is_fill
+        self._is_parent = is_parent
 
 
     @property
@@ -49,8 +51,16 @@ class Order:
         return self.is_fill
     
     @is_filled.setter
-    def is_trades(self, status):
+    def is_filled(self, status):
         self.is_fill = status
+
+    @property
+    def is_parents(self):
+        if order_execute:
+
+            return np.sign(order_execute[-1].units) != np.sign(self.units)
+        else:
+            return self._is_parent
 
     def replace(self, amount, trading_price, date, status):
         del order_execute[-1]  # cancel the old order

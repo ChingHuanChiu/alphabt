@@ -110,3 +110,36 @@ class Report:
     def result(self):
         return self.report(), self.yearly_performance()
 
+if __name__ == '__main__':
+    from strategy import Strategy
+    from backtest import Bt
+    import matplotlib.pyplot as plt
+    from plot import get_plotly
+
+    import pandas as pd
+    import time
+
+    data = pd.read_pickle('sp500.pkl')
+    data = data[data.symbol == 'AMD']
+    class CCI(Strategy):
+        def __init__(self):
+            self.data = data
+            self.init_capital = 100000
+            self.cci = self.indicator('CCI')
+
+        #         print(self.position)
+        def signal(self, index):
+
+            if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100) & (self.position == 0):
+
+                self.buy(stop_loss=0.3)
+            if (self.cci['CCI'][index] < 100) & (self.cci['CCI'][index - 1] > 100) & (self.position > 0):
+                self.sell()
+
+
+    import time
+
+    s = time.time()
+    log, per = Bt(CCI).run()
+    e = time.time()
+    e - s

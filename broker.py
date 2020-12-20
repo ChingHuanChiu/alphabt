@@ -1,7 +1,7 @@
 from accessor import *
 from order import Order
+from copy import deepcopy
 import pandas as pd
-import numpy as np
 
 
 class Broker:
@@ -10,6 +10,7 @@ class Broker:
         self.execute = Execute(equity)  # Execute
 
     def make_order(self, unit, limit_price, stop_loss):
+
         order_queue.append(Order(unit, limit_price, stop_loss))
 
     def check_order(self, ohlc, date):
@@ -44,31 +45,15 @@ class Broker:
                 stop_loss_price = o.trading_price * (1 - o.stop_loss)
 
             elif o.stop_loss and o.is_short:
-
                 stop_loss_price = o.trading_price * (1 + o.stop_loss)
             setattr(o, 'stop_loss_prices', stop_loss_price)
 
-            # if the order is not one to one(one buy order pair with one sell order, and vice versa),
-            # change the order to match the FIFO process
-            FIFO_order = []
-
-            if order_execute and (abs(o.units) != abs(order_execute[-1].units))and \
-                    np.sign(o.units) != np.sign(order_execute[-1].units) and position_list[-1] != 0:
-                # print(o.units, order_execute[-1].units)
-                # print("FIFO Process")
-                # print(order_execute)
-                for t in order_execute[::-1]:
-                    if np.sign(t.units) != np.sign(o.units):
-                        setattr(o, 'units', -t.units)
-                        FIFO_order.insert(0, o)
-                    else:
-                        break
-
-            if FIFO_order:
-                print(len(FIFO_order))
-                order_execute.extend(FIFO_order)
-            else:
-                order_execute.append(o)
+            if not o.is_parents and o.is_long:
+                # print('in not parents in long', o.trading_date, o.units, order_execute[-1].trading_date)
+                add_position_long_order.append(o)
+            elif not o.is_parents and o.is_short:
+                add_position_short_order.append(o)
+            order_execute.append(o)
         order_queue.clear()
         # print('after order_queue', order_queue, date)
 
@@ -94,10 +79,10 @@ class Broker:
     def get_log(self):
         log_dict = {'BuyDate': buy_date, 'BuyPrice': buy_price, 'BuyUnits': buy_unit, 'SellDate': sell_date,
                     'SellPrice': sell_price, 'SellUnits': sell_unit}
-        print(len(buy_date), len(sell_date))
-        print(buy_date)
-        print('----------------')
-        print(sell_date)
+        # print(len(buy_date), len(sell_date))
+        # print(buy_date)
+        # print('----------------')
+        # print(sell_date)
         log = pd.DataFrame(log_dict)
 
         for i in list(log_dict.values()):
@@ -115,31 +100,40 @@ class Execute:
         c = price.close
         for t in order_execute:
 
-            if t.is_long and not t.is_filled:
-
-                # print(self.equity, t.trading_price, t.units, t.trading_price * t.units)
-                assert self.__equity >= t.trading_price * t.units
-
-                # print(t.trading_price)
-
-                buy_price.append(t.trading_price)
-                buy_date.append(t.trading_date)
-                buy_unit.append(t.units)
+            if not t.is_filled:
                 position_list.append(position(t.units))
-                self.__equity -= t.units * t.trading_price
-                setattr(t, 'is_fill', True)
 
-            elif t.is_short and not t.is_filled:
+                if t.is_short and add_position_long_order:
+                    # print('-------------------------')
+                    # print('b4',t.trading_date ,t.units, sum(_o.units for _o in add_position_long_order))
+                    short_parents_unit = t.units + sum(_o.units for _o in add_position_long_order)
+                    t.units = short_parents_unit
+                    # print('after', t.units, t.trading_date)
+                    self.fill(t)
+                    for _t in add_position_long_order:
+                        ct = deepcopy(_t)
 
-                sell_price.append(t.trading_price)
-                sell_date.append(t.trading_date)
-                sell_unit.append(t.units)
-                position_list.append(position(t.units))
-                self.__equity += t.units * t.trading_price
-                setattr(t, 'is_fill', True)
+                        ct.units = -_t.units
+                        ct.trading_date = t.trading_date
+                        ct.trading_prices = t.trading_prices
+                        print('short', ct.units, ct.trading_date)
+                        self.fill(ct)
+                    add_position_long_order.clear()
 
-            else:
-                continue
+                elif t.is_long and add_position_short_order:
+                    parents_unit = t.units - sum(_o.units for _o in add_position_short_order)
+                    t.units = parents_unit
+                    self.fill(t)
+                    for _t in add_position_short_order:
+                        ct = deepcopy(_t)
+                        ct.units = -_t.units
+                        ct.trading_date = t.trading_date
+                        ct.trading_prices = t.trading_prices
+                        self.fill(ct)
+                    add_position_short_order.clear()
+
+                else:
+                    self.fill(t)
 
             if t.is_long and t.stop_loss and c <= t.stop_loss_price and t.is_filled:
                 print('in long')
@@ -150,15 +144,42 @@ class Execute:
                 print('in short')
                 t.replace(t.units, t.stop_loss_price, date, False)
 
+    def fill(self, t):
+
+        if t.is_long:
+
+            # print(self.equity, t.trading_price, t.units, t.trading_price * t.units)
+            assert self.__equity >= t.trading_price * t.units
+
+            # print(t.trading_price)
+
+            buy_price.append(t.trading_price)
+            buy_date.append(t.trading_date)
+            buy_unit.append(t.units)
+            # position_list.append(position(t.units))
+            self.__equity -= t.units * t.trading_price
+            setattr(t, 'is_fill', True)
+
+        elif t.is_short:
+
+            sell_price.append(t.trading_price)
+            sell_date.append(t.trading_date)
+            sell_unit.append(t.units)
+            # position_list.append(position(t.units))
+            self.__equity += t.units * t.trading_price
+            setattr(t, 'is_fill', True)
+
     @property
     def equity(self):
         return self.__equity
 
 
 def position(size):
+
     try:
         position.pos += size
 
     except:
         position.pos = size
     return position.pos
+
