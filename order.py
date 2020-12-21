@@ -63,12 +63,12 @@ class Order:
             return self._is_parent
 
     def replace(self, amount, trading_price, date, status):
-        del order_execute[-1]  # cancel the old order
+
         setattr(self, 'units', amount)
         setattr(self, 'trading_prices', trading_price)
         setattr(self, 'trading_date', date)
         setattr(self, 'is_filled', status)
         self.stop_loss = None
-        order_execute.append(self)
+
 
 

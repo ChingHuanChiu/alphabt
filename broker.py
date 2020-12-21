@@ -32,6 +32,7 @@ class Broker:
             if o.is_long and 1 > o.units > 0:
                 size = int((self.execute.equity * o.units) / trading_price)
                 print('size', size)
+                print(self.execute.equity)
                 setattr(o, 'units', size)
             elif o.is_short and position_list[-1] > 1:
                 setattr(o, 'units', -position_list[-1])
@@ -137,9 +138,9 @@ class Execute:
 
             if t.is_long and t.stop_loss and c <= t.stop_loss_price and t.is_filled:
                 print('in long')
-                # print(price)
+                print(t.units)
                 t.replace(-t.units, t.stop_loss_price, date, False)
-
+                print(t.units)
             elif t.is_short and t.stop_loss and c >= t.stop_loss_price and t.is_filled:
                 print('in short')
                 t.replace(t.units, t.stop_loss_price, date, False)
@@ -166,7 +167,7 @@ class Execute:
             sell_date.append(t.trading_date)
             sell_unit.append(t.units)
             # position_list.append(position(t.units))
-            self.__equity += t.units * t.trading_price
+            self.__equity += abs(t.units) * t.trading_price
             setattr(t, 'is_fill', True)
 
     @property
