@@ -1,5 +1,7 @@
 from accessor import *
 import numpy as np
+
+
 class Order:
     def __init__(self, unit, limit_price, stop_loss, trading_date=None, is_fill=False, is_parent=True):
         self._unit = unit
@@ -9,7 +11,6 @@ class Order:
         self.trading_date = trading_date
         self.is_fill = is_fill
         self._is_parent = is_parent
-
 
     @property
     def units(self):
@@ -38,26 +39,26 @@ class Order:
     @property
     def stop_loss_prices(self):
         return self.stop_loss_price
-    
+
     @stop_loss_prices.setter
     def stop_loss_prices(self, price):
         self.stop_loss_price = price
-        
+
     @property
     def is_filled(self):
         """
         check the order is been filled or not
         """
         return self.is_fill
-    
+
     @is_filled.setter
     def is_filled(self, status):
         self.is_fill = status
 
     @property
     def is_parents(self):
-        if order_execute:
 
+        if self not in order_execute and order_execute:
             return np.sign(order_execute[-1].units) != np.sign(self.units)
         else:
             return self._is_parent
@@ -69,6 +70,4 @@ class Order:
         setattr(self, 'trading_date', date)
         setattr(self, 'is_filled', status)
         self.stop_loss = None
-
-
 

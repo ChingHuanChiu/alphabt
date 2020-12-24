@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
             if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100) & (self.position == 0):
 
-                self.buy(stop_loss=0.3)
+                self.buy(unit=0.2, stop_loss=0.2)
             if (self.cci['CCI'][index] < 100) & (self.cci['CCI'][index - 1] > 100) & (self.position > 0):
                 self.sell()
 
@@ -142,4 +142,4 @@ if __name__ == '__main__':
     s = time.time()
     log, per = Bt(CCI).run()
     e = time.time()
-    e - s
+    print(e - s)
