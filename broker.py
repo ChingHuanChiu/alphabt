@@ -14,7 +14,11 @@ class Broker:
         order_queue.append(Order(unit, limit_price, stop_loss))
 
     def check_order(self, ohlc, date):
-        # buy in open price
+        """
+        check the order and set the information of order by different condition
+        TODO think the another way to avoid too many "if"
+        """
+
         op = ohlc.open
         for o in order_queue:
 
@@ -28,33 +32,31 @@ class Broker:
             setattr(o, 'trading_price', trading_price)
             setattr(o, 'trading_date', date)
 
-            if o.is_long and 1 > o.units > 0:
-                size = int((self.execute.equity * o.units) / trading_price)
+            if o.is_long:
+                if 1 > o.units > 0:
+                    size = int((self.execute.equity * o.units) / trading_price)
+                    setattr(o, 'units', size)
 
-                setattr(o, 'units', size)
-            elif o.is_short and position_list[-1] > 1:
-                setattr(o, 'units', -position_list[-1])
+                if o.stop_loss:
+                    stop_loss_price = o.trading_price * (1 - o.stop_loss)
+                    setattr(o, 'stop_loss_prices', stop_loss_price)
 
-            # check stop loss condition
-            # stop loss is ratio
-            # the assumption is that if touch the stop loss price we can trade with this price
-            stop_loss_price = None
-            if o.stop_loss and o.is_long:
+                if not o.is_parents:
+                    add_position_long_order.append(o)
 
-                stop_loss_price = o.trading_price * (1 - o.stop_loss)
+            elif o.is_short:
+                if position_list[-1] > 1:
+                    setattr(o, 'units', -position_list[-1])
 
-            elif o.stop_loss and o.is_short:
-                stop_loss_price = o.trading_price * (1 + o.stop_loss)
-            setattr(o, 'stop_loss_prices', stop_loss_price)
+                if o.stop_loss:
+                    stop_loss_price = o.trading_price * (1 + o.stop_loss)
+                    setattr(o, 'stop_loss_prices', stop_loss_price)
 
-            if not o.is_parents and o.is_long:
-                # print('in not parents in long', o.trading_date, o.units, order_execute[-1].trading_date)
-                add_position_long_order.append(o)
-            elif not o.is_parents and o.is_short:
-                add_position_short_order.append(o)
+                if not o.is_parents:
+                    add_position_short_order.append(o)
+
             order_execute.append(o)
         order_queue.clear()
-        # print('after order_queue', order_queue, date)
 
     def work(self, price, date):
         """
@@ -170,8 +172,6 @@ class Execute:
             return order.stop_loss and price <= order.stop_loss_price and order.is_filled
         else:
             return order.stop_loss and price >= order.stop_loss_price and order.is_filled
-
-
 
     @property
     def equity(self):

@@ -110,6 +110,7 @@ class Report:
     def result(self):
         return self.report(), self.yearly_performance()
 
+
 if __name__ == '__main__':
     from strategy import Strategy
     from backtest import Bt
@@ -132,7 +133,7 @@ if __name__ == '__main__':
 
             if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100) & (self.position == 0):
 
-                self.buy(unit=0.2, stop_loss=0.2)
+                self.buy()
             if (self.cci['CCI'][index] < 100) & (self.cci['CCI'][index - 1] > 100) & (self.position > 0):
                 self.sell()
 
