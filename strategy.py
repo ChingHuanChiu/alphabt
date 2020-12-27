@@ -1,8 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from broker import Broker
 from accessor import position_list
-import  statistic
-import pandas as pd
+import statistic
 
 
 class Strategy(metaclass=ABCMeta):
@@ -29,9 +28,27 @@ class Strategy(metaclass=ABCMeta):
     def position(self):
         return position_list[-1]
 
-    @property
     def close_position(self):
+        """
+        close the position when current size of position is not zero
+        """
+        if position_list[-1] != 0:
+            # print("in close", position_list[-1])
+            Broker(self.init_capital).make_order(unit=-1 * position_list[-1], limit_price=None, stop_loss=None)
+        else:
+            pass
 
-        Broker(self.init_capital).make_order(unit=-1 * position_list[-1], limit_price=None, stop_loss=None)
+    @property
+    def empty_position(self):
+        return position_list[-1] == 0
+
+    @property
+    def long_position(self):
+        return position_list[-1] > 0
+
+    @property
+    def short_position(self):
+        return position_list[-1] < 0
+
 
 

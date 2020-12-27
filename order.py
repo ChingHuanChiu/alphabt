@@ -59,7 +59,9 @@ class Order:
     def is_parents(self):
 
         if self not in order_execute and order_execute:
-            return np.sign(order_execute[-1].units) != np.sign(self.units)
+
+            return np.sign(order_execute[-1].units) != np.sign(self.units) or \
+                   (position_list[-1] + order_execute[-1].units == 0)
         else:
             return self._is_parent
 
