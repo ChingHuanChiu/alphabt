@@ -131,7 +131,7 @@ if __name__ == '__main__':
         #         print(self.position)
         def signal(self, index):
 
-            if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100) & self.empty_position:
+            if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100) :#& self.empty_position:
                 # self.close_position()
                 self.buy(unit=0.2)
             if (self.cci['CCI'][index] < 100) & (self.cci['CCI'][index - 1] > 100) & self.long_position:

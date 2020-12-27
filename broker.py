@@ -47,7 +47,6 @@ class Broker:
                     setattr(o, 'stop_loss_prices', stop_loss_price)
 
                 if not o.is_parents:
-                    print('a', 'pos is', position_list[-1], 'date', o.trading_date)
                     add_position_long_order.append(o)
 
             elif o.is_short:
@@ -59,9 +58,7 @@ class Broker:
                     setattr(o, 'stop_loss_prices', stop_loss_price)
 
                 if not o.is_parents:
-                    print('a2', position_list[-1])
                     add_position_short_order.append(o)
-
 
             order_execute.append(o)
         order_queue.clear()
@@ -88,7 +85,6 @@ class Broker:
                     'SellPrice': sell_price, 'SellUnits': sell_unit}
 
         log = pd.DataFrame(log_dict)
-
 
         for i in list(log_dict.values()):
             i.clear()
@@ -149,9 +145,10 @@ class Execute:
             self.__equity += abs(t.units) * t.trading_price
             setattr(t, 'is_fill', True)
 
-        if position_list[-1] == 0: del order_execute[: order_execute.index(t) + 1]
+        if position_list[-1] == 0 and t in order_execute: del order_execute[: order_execute.index(t) + 1]
 
-    def _touch_stop_loss(self, order, price):
+    @staticmethod
+    def _touch_stop_loss(order, price):
         # print(order.trading_date, order.stop_loss and price <= order.stop_loss_price and order.is_filled)
         if order.is_long:
 
@@ -163,7 +160,7 @@ class Execute:
         parents_unit = trade_order.units + sum(_o.units for _o in add_position_order)
         trade_order.units = parents_unit
         self.fill(trade_order)
-        for _t in add_position_long_order:
+        for _t in add_position_order:
             ct = deepcopy(_t)
 
             ct.units = -_t.units
