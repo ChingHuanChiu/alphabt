@@ -5,23 +5,22 @@ from broker import *
 
 
 class Bt:
-    def __init__(self, strategy):
-        # self.data = data
-
+    def __init__(self, strategy, commission=None):
+        self.com = commission
         self.Strategy = strategy()
         self.data = self.Strategy.data
         self.Broker = Broker(self.Strategy.init_capital)
 
     def run(self):
+
         for i in range(1, len(self.data) - 1):
-            
+
             self.Strategy.signal(i)
             self.Broker.check_order(self.data.iloc[i + 1, :], date=self.data.index[i + 1])
 
             self.Broker.work(self.data.iloc[i + 1, :], date=self.data.index[i + 1])
 
         if self.Strategy.position != 0:
-
             self.Broker.liquidation(pos=self.Strategy.position, price=self.data.iloc[-1, :], date=self.data.index[-1])
 
         record = self.Broker.get_log()
@@ -44,7 +43,7 @@ class Report:
     def report(self):
         trading_df = self.log
 
-        assert trading_df.empty != True, 'Your Strategy may have no sell(buy) signal!!'
+        assert trading_df.empty is not True, 'Your Strategy may have no sell(buy) signal!!'
 
         trading_df['SellDate'] = pd.to_datetime(trading_df['SellDate'])
         trading_df['BuyDate'] = pd.to_datetime(trading_df['BuyDate'])
@@ -103,7 +102,7 @@ class Report:
 
         # print(out_put)
         out_put['年化報酬率(%)'] = statistic.geo_yearly_ret(out_put)
-#         out_put['大盤年化報酬率(%)'] = statistic.index_geo_yearly_ret(self.df, out_put, index='^GSPC')
+        #         out_put['大盤年化報酬率(%)'] = statistic.index_geo_yearly_ret(self.df, out_put, index='^GSPC')
         print('Sharpe Ratio is :', statistic.year_sharpe(out_put))
         return out_put
 
@@ -122,6 +121,8 @@ if __name__ == '__main__':
 
     data = pd.read_pickle('sp500.pkl')
     data = data[data.symbol == 'AMD']
+
+
     class CCI(Strategy):
         def __init__(self):
             self.data = data
@@ -131,9 +132,9 @@ if __name__ == '__main__':
         #         print(self.position)
         def signal(self, index):
 
-            if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100) :#& self.empty_position:
+            if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100):# & self.empty_position:
                 # self.close_position()
-                self.buy(unit=0.2)
+                self.buy(stop_loss=0.1)
             if (self.cci['CCI'][index] < 100) & (self.cci['CCI'][index - 1] > 100) & self.long_position:
                 # self.close_position()
                 self.sell()
