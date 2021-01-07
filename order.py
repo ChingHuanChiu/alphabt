@@ -58,18 +58,18 @@ class Order:
     @property
     def is_parents(self):
 
-        if self not in order_execute and order_execute:
+        return self._is_parent
 
-            return np.sign(order_execute[-1].units) != np.sign(self.units) or \
-                   (position_list[-1] + order_execute[-1].units == 0)
-        else:
-            return self._is_parent
+    @is_parents.setter
+    def is_parents(self, status):
+        self._is_parent = status
 
-    def replace(self, amount, trading_price, date, status):
+    def replace(self, amount, trading_price, date, status, is_parent):
 
         setattr(self, 'units', amount)
         setattr(self, 'trading_prices', trading_price)
         setattr(self, 'trading_date', date)
         setattr(self, 'is_filled', status)
+        setattr(self, 'is_parents', is_parent)
         self.stop_loss = None
 

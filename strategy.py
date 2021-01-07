@@ -12,12 +12,15 @@ class Strategy(metaclass=ABCMeta):
         the main strategy logic
         """
 
-    def buy(self, unit=1, limit_price=None, stop_loss=None):
+    def buy(self, unit=None, limit_price=None, stop_loss=None):
+        if unit is None:
+            unit = position_list[-1]
 
         Broker(self.init_capital).make_order(unit=unit, limit_price=limit_price, stop_loss=stop_loss)
 
-    def sell(self, unit=-1, limit_price=None, stop_loss=None):
-
+    def sell(self, unit=None, limit_price=None, stop_loss=None):
+        if unit is None:
+            unit = -position_list[-1]
         Broker(self.init_capital).make_order(unit=unit, limit_price=limit_price, stop_loss=stop_loss)
 
     def indicator(self, name, timeperiod=None):

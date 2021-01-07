@@ -2,6 +2,7 @@ from accessor import *
 from order import Order
 from copy import deepcopy
 import pandas as pd
+import numpy as np
 
 
 class Broker:
@@ -16,12 +17,13 @@ class Broker:
     def check_order(self, ohlc, date):
         """
         check the order and set the information of order by different condition
-        TODO think the another way to avoid too many "if"
         """
 
         op = ohlc.open
 
         for o in order_queue:
+            if position_list[-1] != 0 and position_list[-1] + o.units != 0:
+                o.is_parents = False
 
             # check the order type, if market order, trading price is next open
             if o.limit_price:
@@ -32,7 +34,6 @@ class Broker:
 
             setattr(o, 'trading_price', trading_price)
             setattr(o, 'trading_date', date)
-            # print(o.trading_date)
 
             if o.is_long:
                 if 1 > o.units > 0:
@@ -104,22 +105,25 @@ class Execute:
             if not t.is_filled:
                 position_list.append(position(t.units))
 
-                if t.is_short and add_position_long_order:
-                    self.split_add_pos_order(t, add_position_long_order)
+                if t.is_short and add_position_long_order and t.is_parents:
 
-                elif t.is_long and add_position_short_order:
+                    self.split_add_pos_order(t, add_position_long_order)
+                elif t.is_long and add_position_short_order and t.is_parents:
                     self.split_add_pos_order(t, add_position_short_order)
 
                 else:
                     self.fill(t)
 
             if self._touch_stop_loss(order=t, price=c):
-                if t.is_long and not t.is_parents:
-                    add_position_long_order.remove(t)
-                elif t.is_short and not t.is_parents:
-
-                    add_position_short_order.remove(t)
-                t.replace(-t.units, t.stop_loss_price, date, False)
+                print(t.trading_date, 'sl')
+                # if t.is_long and not t.is_parents:
+                #     add_position_long_order.remove(t)
+                # elif t.is_short and not t.is_parents:
+                #
+                #     add_position_short_order.remove(t)
+                t.replace(-t.units, t.stop_loss_price, date, False, is_parent=False)
+                if not t.is_parents:
+                    order_execute.remove(t)
 
     def fill(self, t):
 
@@ -141,7 +145,7 @@ class Execute:
             sell_price.append(t.trading_price)
             sell_date.append(t.trading_date)
             sell_unit.append(t.units)
-
+            # print(t.units, t.trading_date, t.is_parents, 'short')
             self.__equity += abs(t.units) * t.trading_price
             setattr(t, 'is_fill', True)
 
@@ -157,17 +161,36 @@ class Execute:
             return order.stop_loss and price >= order.stop_loss_price and order.is_filled
 
     def split_add_pos_order(self, trade_order, add_position_order: list):
-        parents_unit = trade_order.units + sum(_o.units for _o in add_position_order)
-        trade_order.units = parents_unit
-        self.fill(trade_order)
-        for _t in add_position_order:
-            ct = deepcopy(_t)
+        temp_order_list = []
+        if trade_order.is_short:
+            parents_unit = trade_order.units + sum(abs(_o.units) for _o in add_position_order)
+        else:
+            parents_unit = trade_order.units - sum(abs(_o.units) for _o in add_position_order)
 
-            ct.units = -_t.units
-            ct.trading_date = trade_order.trading_date
-            ct.trading_prices = trade_order.trading_prices
-            self.fill(ct)
+        if trade_order.units != 0:
+            trade_order.units = parents_unit
+
+            temp_order_list.append(trade_order)
+        # self.fill(trade_order)
+        for _t in add_position_order:
+            if np.sign(_t.units) == np.sign(trade_order.units):
+                temp_order_list.append(_t)
+                pass
+            else:
+                ct = deepcopy(_t)
+
+                ct.units = -_t.units
+                ct.trading_date = trade_order.trading_date
+                ct.trading_prices = trade_order.trading_prices
+
+                temp_order_list.append(ct)
+
+        for temp_o in sorted(temp_order_list, key=lambda s: s.trading_date):
+            print(temp_o.trading_date, temp_o.units, 1313131)
+            self.fill(temp_o)
+
         add_position_order.clear()
+
 
     @property
     def equity(self):
@@ -184,4 +207,3 @@ def position(size):
     except:
         position.pos = size
     return position.pos
-
