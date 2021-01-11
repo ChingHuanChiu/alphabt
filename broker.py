@@ -115,14 +115,10 @@ class Execute:
                     self.fill(t)
 
             if self._touch_stop_loss(order=t, price=c):
-                print(t.trading_date, 'sl')
-                # if t.is_long and not t.is_parents:
-                #     add_position_long_order.remove(t)
-                # elif t.is_short and not t.is_parents:
-                #
-                #     add_position_short_order.remove(t)
+                origin_o = deepcopy(t).is_parents
+
                 t.replace(-t.units, t.stop_loss_price, date, False, is_parent=False)
-                if not t.is_parents:
+                if not origin_o:
                     order_execute.remove(t)
 
     def fill(self, t):
@@ -162,20 +158,20 @@ class Execute:
 
     def split_add_pos_order(self, trade_order, add_position_order: list):
         temp_order_list = []
+        origin_trader_order_sign = np.sign(trade_order.units)
         if trade_order.is_short:
             parents_unit = trade_order.units + sum(abs(_o.units) for _o in add_position_order)
         else:
             parents_unit = trade_order.units - sum(abs(_o.units) for _o in add_position_order)
-
+        trade_order.units = parents_unit
         if trade_order.units != 0:
-            trade_order.units = parents_unit
 
             temp_order_list.append(trade_order)
         # self.fill(trade_order)
         for _t in add_position_order:
-            if np.sign(_t.units) == np.sign(trade_order.units):
+            if np.sign(_t.units) == origin_trader_order_sign:
                 temp_order_list.append(_t)
-                pass
+
             else:
                 ct = deepcopy(_t)
 
@@ -185,8 +181,7 @@ class Execute:
 
                 temp_order_list.append(ct)
 
-        for temp_o in sorted(temp_order_list, key=lambda s: s.trading_date):
-            print(temp_o.trading_date, temp_o.units, 1313131)
+        for temp_o in temp_order_list:
             self.fill(temp_o)
 
         add_position_order.clear()
