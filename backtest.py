@@ -77,7 +77,7 @@ class Report:
             performance_df['年度總損益(元)'] = statistic.annual_profit(record_df_year)
             performance_df['作多次數(次)'] = statistic.buy_times(record_df_year)
             performance_df['作空次數(次)'] = statistic.sell_times(record_df_year)
-            performance_df['交易總次數(次)'] = statistic.trade_times(record_df_year)
+            performance_df['交易總次數(次)'] = performance_df['作空次數(次)'] + performance_df['作多次數(次)']
             performance_df['勝率(%)'] = statistic.win_rate(record_df_year)
             performance_df['獲利因子'] = statistic.profit_factor(record_df_year)
             performance_df['最大損失(元)'] = statistic.max_loss(record_df_year)
@@ -132,12 +132,14 @@ if __name__ == '__main__':
         #         print(self.position)
         def signal(self, index):
 
-            if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100):#& self.empty_position:
-                # self.close_position()
-                self.buy(unit=1, stop_loss=0.08)
-            if (self.cci['CCI'][index] < 100) & (self.cci['CCI'][index - 1] > 100) & self.long_position:
-                # self.close_position()
-                self.sell()
+            if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100):# & self.empty_position:
+                if self.short_position:
+                    self.close_position()
+                self.buy(unit=0.45, stop_loss=0.08)
+            if (self.cci['CCI'][index] < 100) & (self.cci['CCI'][index - 1] > 100) :#& self.long_position:
+                if self.long_position:
+                    self.close_position()
+                self.sell(unit=-2)
 
 
     import time

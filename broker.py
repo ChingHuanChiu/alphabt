@@ -40,8 +40,8 @@ class Broker:
                     size = int((self.execute.equity * o.units) / trading_price)
                     setattr(o, 'units', size)
 
-                if position_list[-1] < -1:
-                    setattr(o, 'units', -position_list[-1])
+                # if position_list[-1] < -1:
+                #     setattr(o, 'units', -position_list[-1])
 
                 if o.stop_loss:
                     stop_loss_price = o.trading_price * (1 - o.stop_loss)
@@ -51,8 +51,8 @@ class Broker:
                     add_position_long_order.append(o)
 
             elif o.is_short:
-                if position_list[-1] > 1:
-                    setattr(o, 'units', -position_list[-1])
+                # if position_list[-1] > 1:
+                #     setattr(o, 'units', -position_list[-1])
 
                 if o.stop_loss:
                     stop_loss_price = o.trading_price * (1 + o.stop_loss)

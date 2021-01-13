@@ -15,12 +15,13 @@ class Strategy(metaclass=ABCMeta):
     def buy(self, unit=None, limit_price=None, stop_loss=None):
         if unit is None:
             unit = position_list[-1]
-
+        assert unit > 0, 'in buy action, unit must be positive'
         Broker(self.init_capital).make_order(unit=unit, limit_price=limit_price, stop_loss=stop_loss)
 
     def sell(self, unit=None, limit_price=None, stop_loss=None):
         if unit is None:
             unit = -position_list[-1]
+        assert unit < 0, ' in sell action, unit must be negative'
         Broker(self.init_capital).make_order(unit=unit, limit_price=limit_price, stop_loss=stop_loss)
 
     def indicator(self, name, timeperiod=None):
