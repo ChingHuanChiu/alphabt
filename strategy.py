@@ -38,7 +38,7 @@ class Strategy(metaclass=ABCMeta):
         """
         if position_list[-1] != 0:
             # print("in close", position_list[-1])
-            Broker(self.init_capital).make_order(unit=-1 * position_list[-1], limit_price=None, stop_loss=None)
+            Broker(self.init_capital).make_order(unit=-1 * position_list[-1], limit_price=None, stop_loss=None, is_clean_pos=True)
         else:
             pass
 

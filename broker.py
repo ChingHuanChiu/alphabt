@@ -106,7 +106,7 @@ class Execute:
                 position_list.append(position(t.units))
 
                 if t.is_short and add_position_long_order and t.is_parents:
-
+                    # print(t.trading_date)
                     self.split_add_pos_order(t, add_position_long_order)
                 elif t.is_long and add_position_short_order and t.is_parents:
                     self.split_add_pos_order(t, add_position_short_order)
@@ -116,10 +116,12 @@ class Execute:
 
             if self._touch_stop_loss(order=t, price=c):
                 origin_o = deepcopy(t).is_parents
-
+                print('in stop loss', t.trading_date, date, origin_o)
                 t.replace(-t.units, t.stop_loss_price, date, False, is_parent=False)
                 if not origin_o:
                     order_execute.remove(t)
+
+            if position_list[-1] == 0 and t in order_execute: del order_execute[: order_execute.index(t) + 1]
 
     def fill(self, t):
 
@@ -145,7 +147,7 @@ class Execute:
             self.__equity += abs(t.units) * t.trading_price
             setattr(t, 'is_fill', True)
 
-        if position_list[-1] == 0 and t in order_execute: del order_execute[: order_execute.index(t) + 1]
+        # if position_list[-1] == 0 and t in order_execute: del order_execute[: order_execute.index(t) + 1]
 
     @staticmethod
     def _touch_stop_loss(order, price):
@@ -157,6 +159,7 @@ class Execute:
             return order.stop_loss and price >= order.stop_loss_price and order.is_filled
 
     def split_add_pos_order(self, trade_order, add_position_order: list):
+        print('split', trade_order.trading_date, trade_order.units)
         temp_order_list = []
         origin_trader_order_sign = np.sign(trade_order.units)
         if trade_order.is_short:
@@ -164,6 +167,7 @@ class Execute:
         else:
             parents_unit = trade_order.units - sum(abs(_o.units) for _o in add_position_order)
         trade_order.units = parents_unit
+        print('par', parents_unit)
         if trade_order.units != 0:
 
             temp_order_list.append(trade_order)
@@ -180,8 +184,9 @@ class Execute:
                 ct.trading_prices = trade_order.trading_prices
 
                 temp_order_list.append(ct)
-
+        print([rr.trading_date for rr in temp_order_list])
         for temp_o in temp_order_list:
+
             self.fill(temp_o)
 
         add_position_order.clear()
