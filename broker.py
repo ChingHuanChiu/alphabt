@@ -1,6 +1,6 @@
 from accessor import *
 from order import Order
-from copy import deepcopy
+from copy import deepcopy, copy
 import pandas as pd
 import numpy as np
 
@@ -22,7 +22,7 @@ class Broker:
         op = ohlc.open
 
         for o in order_queue:
-            if position_list[-1] != 0 and position_list[-1] + o.units != 0:
+            if position_list[-1] != 0 and position_list[-1] + o.units != 0 and len(order_queue) == 1:
                 o.is_parents = False
 
             # check the order type, if market order, trading price is next open
@@ -121,6 +121,7 @@ class Execute:
                 if not origin_o:
                     order_execute.remove(t)
 
+
             if position_list[-1] == 0 and t in order_execute: del order_execute[: order_execute.index(t) + 1]
 
     def fill(self, t):
@@ -151,13 +152,17 @@ class Execute:
 
     @staticmethod
     def _touch_stop_loss(order, price):
-        # print(order.trading_date, order.stop_loss and price <= order.stop_loss_price and order.is_filled)
+
         if order.is_long:
+            con = order.stop_loss and price <= order.stop_loss_price and order.is_filled and order.trading_date not in [
+                order.trading_date for order in order_execute]
 
-            return order.stop_loss and price <= order.stop_loss_price and order.is_filled
+            return con
         else:
-            return order.stop_loss and price >= order.stop_loss_price and order.is_filled
+            con = order.stop_loss and price <= order.stop_loss_price and order.is_filled and order.trading_date not in [
+                order.trading_date for order in order_execute]
 
+            return con
     def split_add_pos_order(self, trade_order, add_position_order: list):
         print('split', trade_order.trading_date, trade_order.units)
         temp_order_list = []
@@ -184,7 +189,7 @@ class Execute:
                 ct.trading_prices = trade_order.trading_prices
 
                 temp_order_list.append(ct)
-        print([rr.trading_date for rr in temp_order_list])
+        # print([rr.trading_date for rr in temp_order_list])
         for temp_o in temp_order_list:
 
             self.fill(temp_o)
