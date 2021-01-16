@@ -1,5 +1,6 @@
 from strategy import Strategy
 from backtest import Bt
+from statistic import indicator
 import matplotlib.pyplot as plt
 from pandas.tseries.offsets import BDay
 from plot import get_plotly
@@ -8,8 +9,7 @@ import numpy as np
 import pandas as pd
 import time
 
-# data = pd.read_pickle('sp500.pkl')
-# data = data[data.symbol == 'AMD']
+
 
 
 class Portfolio:
@@ -18,22 +18,23 @@ class Portfolio:
         self.start_date = pd.to_datetime(start_date)
         self.end_date = pd.to_datetime(end_date)
 
-    def run(self, hold_days, strategy: Callable):
+    def run(self, hold_days: int, strategy: Callable):
         """
         TODO fix the code
         """
         assert isinstance(hold_days, int), 'the type of hold_dates should be int.'
 
-        dates = self._date_iter_periodicity()
+        dates = self._date_iter_periodicity(hold_days=hold_days)
         ret_output = pd.Series()
         log_df = pd.DataFrame()
         for sdate, edate in dates:
             weight = [0.5] * len(strategy(self.data, sdate))
             print('============================================================')
+            print(strategy(self.data, sdate))
             ret_df = pd.DataFrame()
             for s, w in zip(strategy(self.data, sdate), weight):
                 sdata = self.data[self.data.symbol == s]
-                # print('----->', type(pd.to_datetime(sdate)), edate)
+                print('----->', type(pd.to_datetime(sdate)), edate)
                 # 配合alpha，訊號出現隔天才交易，所以要將買賣訊號的日期往前一天
                 log = buy_and_hold(sdata, sdate - BDay(1), edate - BDay(1))[0]
                 log['symbol'] = s
@@ -63,11 +64,11 @@ class Portfolio:
 
         return log_df, self.portfolio_log(log_df)
 
-    def _date_iter_periodicity(self):
+    def _date_iter_periodicity(self, hold_days):
         date = self.start_date
         while date < self.end_date:
-            yield date, (date + BDay(self.hold_days))
-            date += BDay(self.hold_days)
+            yield date, (date + BDay(hold_days))
+            date += BDay(hold_days)
 
     @staticmethod
     def portfolio_log(log):
@@ -90,18 +91,40 @@ def buy_and_hold(data, start_date, end_date):
             self.data = data
             self.init_capital = np.inf
 
-        def signal(self, index):
+        def signal(self, ind):
 
-            if (self.data.index == start_date) & self.empty_position:
+            if (self.data.index[ind] == start_date) & (self.empty_position):
+                self.buy(unit=1)
 
-                self.buy()
-
-            if self.data.index == end_date & self.long_position:
+            if (self.data.index[ind] == end_date) & (self.long_position):
                 self.sell()
 
     log, per = Bt(Port).run()
     return log, per
 
+if __name__ == '__main__':
 
+    data = pd.read_pickle('sp500.pkl')
+    data.columns = [c.lower() for c in data.columns]
 
+    def strategy(df, sdate):
+        res = []
+        for d in df.groupby('symbol'):
 
+            data = d[1][['open', 'close', 'low', 'high', 'volume']]
+
+            kd = indicator(data, 'STOCH')
+            std = indicator(data, 'STDDEV')
+            condition = (kd['slowk'] > kd['slowd']) & (kd['slowk'].shift() < kd['slowd'].shift())
+            condition = (std['STDDEV'] > 1)  # & (cci['STDDEV'].shift(1) < -100)
+
+            try:
+                if condition.loc[sdate]:
+                    res.append(d[0])
+
+            except:
+
+                continue
+        return res
+
+    log, pot_log = Portfolio(data, start_date='2000-01-01', end_date='2005-01-01').run(hold_days=10, strategy=strategy)

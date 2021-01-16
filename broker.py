@@ -22,7 +22,7 @@ class Broker:
         op = ohlc.open
 
         for o in order_queue:
-            if position_list[-1] != 0 and position_list[-1] + o.units != 0 and len(order_queue) == 1:
+            if position() != 0 and position() + o.units != 0 and len(order_queue) == 1:
                 o.is_parents = False
 
             if o.limit_price:
@@ -98,7 +98,7 @@ class Execute:
 
         for t in order_execute:
             if not t.is_filled:
-                position_list.append(position(t.units))
+                position_list.append(t.units)
 
                 if t.is_short and add_position_long_order and t.is_parents:
                     # print(t.trading_date)
@@ -115,7 +115,7 @@ class Execute:
                 if not origin_o:
                     order_execute.remove(t)
 
-            if position_list[-1] == 0 and t in order_execute: del order_execute[: order_execute.index(t) + 1]
+            if position() == 0 and t in order_execute: del order_execute[: order_execute.index(t) + 1]
 
     def fill(self, t):
 
@@ -185,14 +185,17 @@ class Execute:
     def equity(self):
         return self.__equity
 
+#
+# def position(size):
+#     """
+#     TODO : become class
+#     """
+#     try:
+#         position.pos += size
+#
+#     except:
+#         position.pos = size
+#     return position.pos
 
-def position(size):
-    """
-    TODO : become class
-    """
-    try:
-        position.pos += size
-
-    except:
-        position.pos = size
-    return position.pos
+def position():
+    return sum(size for size in position_list)
