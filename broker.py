@@ -75,7 +75,6 @@ class Broker:
 
         self.work(price=price, date=date)
 
-
     def get_log(self):
         log_dict = {'BuyDate': buy_date, 'BuyPrice': buy_price, 'BuyUnits': buy_unit, 'SellDate': sell_date,
                     'SellPrice': sell_price, 'SellUnits': sell_unit}
@@ -161,7 +160,6 @@ class Execute:
             parents_unit = trade_order.units - sum(abs(_o.units) for _o in add_position_order)
         trade_order.units = parents_unit
         if trade_order.units != 0:
-
             temp_order_list.append(trade_order)
         for _t in add_position_order:
             if np.sign(_t.units) == origin_trader_order_sign:
@@ -176,7 +174,6 @@ class Execute:
 
                 temp_order_list.append(ct)
         for temp_o in temp_order_list:
-
             self.fill(temp_o)
 
         add_position_order.clear()
@@ -185,17 +182,6 @@ class Execute:
     def equity(self):
         return self.__equity
 
-#
-# def position(size):
-#     """
-#     TODO : become class
-#     """
-#     try:
-#         position.pos += size
-#
-#     except:
-#         position.pos = size
-#     return position.pos
 
 def position():
     return sum(size for size in position_list)
