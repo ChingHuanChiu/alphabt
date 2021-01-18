@@ -129,17 +129,17 @@ if __name__ == '__main__':
             self.init_capital = 100000
             self.cci = self.indicator('CCI')
 
-        #         print(self.position)
+
         def signal(self, index):
 
-            if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100) & self.empty_position:
-                # if self.short_position:
-                #     self.close_position()
-                self.buy(unit=1)
-            if (self.cci['CCI'][index] < 100) & (self.cci['CCI'][index - 1] > 100) & self.long_position:
-                # if self.long_position:
-                #     self.close_position()
-                self.sell()
+            if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100) :#& self.empty_position:
+                if self.short_position:
+                    self.close_position()
+                self.buy(unit=1, stop_loss=0.1)
+            if (self.cci['CCI'][index] < 100) & (self.cci['CCI'][index - 1] > 100) :#& self.long_position:
+                if self.long_position:
+                    self.close_position()
+                self.sell(unit=-1, stop_loss=0.1)
 
 
     import time

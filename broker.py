@@ -16,7 +16,7 @@ class Broker:
 
     def check_order(self, ohlc, date):
         """
-        check the order and set the information of order by different condition
+        check the order and set the information to order by different condition
         """
 
         op = ohlc.open
@@ -98,7 +98,6 @@ class Execute:
                 position_list.append(t.units)
 
                 if t.is_short and add_position_long_order and t.is_parents:
-                    # print(t.trading_date)
                     self.split_add_pos_order(t, add_position_long_order)
                 elif t.is_long and add_position_short_order and t.is_parents:
                     self.split_add_pos_order(t, add_position_short_order)
@@ -108,7 +107,8 @@ class Execute:
 
             if self._touch_stop_loss(order=t, price=c):
                 origin_o = deepcopy(t).is_parents
-                t.replace(-t.units, t.stop_loss_price, date, False, is_parent=False)
+                t.replace(units=-t.units, trading_prices=t.stop_loss_price, trading_date=date, is_filled=False,
+                          is_parent=False, stop_loss=None)
                 if not origin_o:
                     order_execute.remove(t)
 

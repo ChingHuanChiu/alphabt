@@ -64,12 +64,7 @@ class Order:
     def is_parents(self, status):
         self._is_parent = status
 
-    def replace(self, amount, trading_price, date, status, is_parent):
+    def replace(self, **kwargs):
 
-        setattr(self, 'units', amount)
-        setattr(self, 'trading_prices', trading_price)
-        setattr(self, 'trading_date', date)
-        setattr(self, 'is_filled', status)
-        setattr(self, 'is_parents', is_parent)
-        self.stop_loss = None
-
+        for k, v in kwargs:
+            self.__dict__[k] = v
