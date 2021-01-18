@@ -59,9 +59,7 @@ class Broker:
         order_queue.clear()
 
     def work(self, price, date):
-        """
-        price: Series with columns: Open, Close, High, Low
-        """
+
         self.execute.trading(price, date)
 
     def liquidation(self, pos, price, date):
@@ -152,6 +150,11 @@ class Execute:
             return con
 
     def split_add_pos_order(self, trade_order, add_position_order: list):
+        """
+        split the order which include overweight order into a list of single order and fill them
+        e.g. a sell order [with 6 units has an parent order and an overweight order] becomes
+        [an parent order with -4 units , an order with -2 units]
+        """
         temp_order_list = []
         origin_trader_order_sign = np.sign(trade_order.units)
         if trade_order.is_short:

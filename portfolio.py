@@ -37,11 +37,12 @@ class Portfolio:
                 print('----->', type(pd.to_datetime(sdate)), edate)
                 # 配合alpha，訊號出現隔天才交易，所以要將買賣訊號的日期往前一天
                 log = buy_and_hold(sdata, sdate - BDay(1), edate - BDay(1))[0]
+
                 log['symbol'] = s
-                sub_sdata = sdata[log['BuyDay'][0]: log['SellDay'][0]]
+                sub_sdata = sdata[log['BuyDate'][0]: log['SellDate'][0]]
                 ret_df[s] = sub_sdata['close'].pct_change()
                 # print(log)
-                print({'symbol': s, 'buy_date': log['BuyDay'][0], 'sell_date': log['SellDay'][0]})
+                print({'symbol': s, 'buy_date': log['BuyDate'][0], 'sell_date': log['SellDate'][0]})
 
                 log['weight'] = [w]
 
@@ -73,9 +74,9 @@ class Portfolio:
     @staticmethod
     def portfolio_log(log):
         ret, mdd = [], []
-        df = pd.DataFrame(index=log.SellDay.unique())
+        df = pd.DataFrame(index=log.SellDate.unique())
         df.index.name = '換股日期'
-        for d in log.groupby('SellDay'):
+        for d in log.groupby('SellDate'):
             ret.append(d[1]['報酬率(%)'].dot(d[1]['weight']))
             mdd.append(d[1]['MDD(%)'].dot(d[1]['weight']))
         df['報酬率(%)'] = ret
@@ -93,10 +94,10 @@ def buy_and_hold(data, start_date, end_date):
 
         def signal(self, ind):
 
-            if (self.data.index[ind] == start_date) & (self.empty_position):
+            if (self.data.index[ind] == start_date) & self.empty_position:
                 self.buy(unit=1)
 
-            if (self.data.index[ind] == end_date) & (self.long_position):
+            if (self.data.index[ind] == end_date) & self.long_position:
                 self.sell()
 
     log, per = Bt(Port).run()
@@ -127,4 +128,4 @@ if __name__ == '__main__':
                 continue
         return res
 
-    log, pot_log = Portfolio(data, start_date='2000-01-01', end_date='2005-01-01').run(hold_days=10, strategy=strategy)
+    log, pot_log = Portfolio(data, start_date='2000-01-01', end_date='2001-01-01').run(hold_days=120, strategy=strategy)
