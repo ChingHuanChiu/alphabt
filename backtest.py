@@ -1,5 +1,6 @@
 import pandas as pd
 import statistic
+import util
 from plot import get_plotly
 from broker import *
 
@@ -9,19 +10,22 @@ class Bt:
         self.com = commission
         self.Strategy = strategy()
         self.data = self.Strategy.data
+        self.data = util.reset_data(self.data)
         self.Broker = Broker(self.Strategy.init_capital)
 
     def run(self):
 
         for i in range(1, len(self.data) - 1):
+            ohlc = self.data.values[i + 1, :]
 
             self.Strategy.signal(i)
-            self.Broker.check_order(self.data.iloc[i + 1, :], date=self.data.index[i + 1])
+            self.Broker.check_order(ohlc, date=self.data.index[i + 1])
 
-            self.Broker.work(self.data.iloc[i + 1, :], date=self.data.index[i + 1])
+            self.Broker.work(ohlc, date=self.data.index[i + 1], commission=self.com)
 
         if self.Strategy.position != 0:
-            self.Broker.liquidation(pos=self.Strategy.position, price=self.data.iloc[-1, :], date=self.data.index[-1])
+            self.Broker.liquidation(pos=self.Strategy.position, price=self.data.values[-1, :], date=self.data.index[-1]
+                                    ,commission=self.com)
 
         record = self.Broker.get_log()
 
@@ -45,15 +49,9 @@ class Report:
 
         assert trading_df.empty is not True, 'Your Strategy may have no sell(buy) signal!!'
 
-        trading_df['SellDate'] = pd.to_datetime(trading_df['SellDate'])
-        trading_df['BuyDate'] = pd.to_datetime(trading_df['BuyDate'])
         trading_df['KeepDay'] = (trading_df['SellDate'] - trading_df['BuyDate']).dt.days
-        trading_df['profit(元)'] = trading_df['SellPrice'] * trading_df['SellUnits'] * -1 - trading_df['BuyPrice'] * \
-                                  trading_df['BuyUnits']
-
-        trading_df['成本'] = statistic.cost(trading_df, trading_df['BuyUnits'], trading_df['SellUnits'])
-        trading_df['報酬率(%)'] = round(
-            ((trading_df['profit(元)']) / trading_df['成本']) * 100, 3)
+        trading_df['profit(元)'] = trading_df.CashReceiving - trading_df.CashPaying
+        trading_df['報酬率(%)'] = round((trading_df.CashReceiving / trading_df.CashPaying - 1) * 100, 3)
         trading_df['累積報酬率(%)'] = round((((trading_df['報酬率(%)'] * 0.01) + 1).cumprod() - 1) * 100, 3)
         trading_df['MDD(%)'] = statistic.mdd(self.df, trading_df)
 
@@ -85,13 +83,12 @@ class Report:
             performance_df['最大獲利(元)'] = statistic.max_profit(record_df_year)
             # performance_df['個股年度最大獲利(元)'] = statistic.stock_max_profit(self.df, y)
             performance_df['個股年度報酬(%)'] = statistic.stock_year_return(self.df, y)
-            # performance_df['年度報酬率(%)'] = statistic.year_return(record_df_year)
-            # performance_df['平均交易報酬率(%)'] = statistic.average_trade_return(performance_df)
+            performance_df['當年度報酬率(%)'] = statistic.year_return(record_df_year)
+            performance_df['平均交易報酬率(%)'] = statistic.average_trade_return(performance_df)
 
             count += len(record_df_year)
             performance_df['累積年度報酬(%)'] = statistic.cum_year_return(record_df, count)
 
-            # performance_df['年度淨報酬率(%)'] = statistic.net_year_return(record_df_year, self.handling_fee, self.tax)
             if self.init_cap:
                 performance_df['累計淨值(元)'] = round(record_df['累計淨值(元)'][count - 1])
             else:
@@ -102,8 +99,9 @@ class Report:
 
         # print(out_put)
         out_put['年化報酬率(%)'] = statistic.geo_yearly_ret(out_put)
-        #         out_put['大盤年化報酬率(%)'] = statistic.index_geo_yearly_ret(self.df, out_put, index='^GSPC')
-        print('Sharpe Ratio is :', statistic.year_sharpe(out_put))
+        out_put['大盤年化報酬率(%)'] = statistic.index_geo_yearly_ret(self.df, out_put, index='^GSPC')
+        util.print_result(sharpe=statistic.year_sharpe(out_put), calmar=statistic.calmar_ratio(out_put, record_df))
+
         return out_put
 
     def result(self):
@@ -113,36 +111,31 @@ class Report:
 if __name__ == '__main__':
     from strategy import Strategy
     from backtest import Bt
-    import matplotlib.pyplot as plt
     from plot import get_plotly
+    from data import Data
 
     import pandas as pd
     import time
 
-    data = pd.read_pickle('sp500.pkl')
-    data = data[data.symbol == 'AMD']
-
+    # data = pd.read_pickle('sp500.pkl')
+    # data = data[data.symbol == 'AMD']
 
     class CCI(Strategy):
         def __init__(self):
-            self.data = data
-            self.init_capital = 100000
+            self.data = Data().symbol_data(symbol=['AMD'])
+            self.init_capital = 10000
             self.cci = self.indicator('CCI')
-
 
         def signal(self, index):
 
-            if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100) :#& self.empty_position:
-                if self.short_position:
-                    self.close_position()
-                self.buy(unit=1, stop_loss=0.1)
-            if (self.cci['CCI'][index] < 100) & (self.cci['CCI'][index - 1] > 100) :#& self.long_position:
-                if self.long_position:
-                    self.close_position()
-                self.sell(unit=-1, stop_loss=0.1)
-
-
-    import time
+            if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100) & self.empty_position:
+                # if self.short_position:
+                #     self.close_position()
+                self.buy(unit=10)
+            if (self.cci['CCI'][index] < 100) & (self.cci['CCI'][index - 1] > 100) & self.long_position:
+                # if self.long_position:
+                #     self.close_position()
+                self.sell()
 
     s = time.time()
     log, per = Bt(CCI).run()

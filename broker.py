@@ -1,8 +1,9 @@
 from accessor import *
 from order import Order
-from copy import deepcopy, copy
+from copy import deepcopy
 import pandas as pd
 import numpy as np
+import util
 
 
 class Broker:
@@ -19,7 +20,7 @@ class Broker:
         check the order and set the information to order by different condition
         """
 
-        op = ohlc.open
+        op = ohlc[0]
 
         for o in order_queue:
             if position() != 0 and position() + o.units != 0 and len(order_queue) == 1:
@@ -58,24 +59,25 @@ class Broker:
             order_execute.append(o)
         order_queue.clear()
 
-    def work(self, price, date):
+    def work(self, price, date, commission):
 
-        self.execute.trading(price, date)
+        self.execute.trading(price, date, commission)
 
-    def liquidation(self, pos, price, date):
+    def liquidation(self, pos, price, date, commission):
         """
         clean the last position
         """
         o = Order(-1 * pos, limit_price=None, stop_loss=None, is_fill=False)
-        setattr(o, 'trading_price', price.open)
+        setattr(o, 'trading_price', price[0])
         setattr(o, 'trading_date', date)
         order_execute.append(o)
 
-        self.work(price=price, date=date)
+        self.work(price=price, date=date, commission=commission)
 
     def get_log(self):
-        log_dict = {'BuyDate': buy_date, 'BuyPrice': buy_price, 'BuyUnits': buy_unit, 'SellDate': sell_date,
-                    'SellPrice': sell_price, 'SellUnits': sell_unit}
+        log_dict = {'BuyDate': buy_date, 'BuyPrice': buy_price, 'BuyUnits': buy_unit, 'CashPaying': amnt_paying,
+                    'SellDate': sell_date, 'SellPrice': sell_price, 'SellUnits': sell_unit,
+                    'CashReceiving': amnt_receiving}
 
         log = pd.DataFrame(log_dict)
 
@@ -89,21 +91,21 @@ class Execute:
     def __init__(self, equity):
         self.__equity = equity
 
-    def trading(self, price, date):
+    def trading(self, price, date, commission):
 
-        c = price.close
+        c = price[3]
 
         for t in order_execute:
             if not t.is_filled:
                 position_list.append(t.units)
 
                 if t.is_short and add_position_long_order and t.is_parents:
-                    self.split_add_pos_order(t, add_position_long_order)
+                    self.split_add_pos_order(t, add_position_long_order, commission)
                 elif t.is_long and add_position_short_order and t.is_parents:
-                    self.split_add_pos_order(t, add_position_short_order)
+                    self.split_add_pos_order(t, add_position_short_order, commission)
 
                 else:
-                    self.fill(t)
+                    self.fill(t, commission)
 
             if self._touch_stop_loss(order=t, price=c):
                 origin_o = deepcopy(t).is_parents
@@ -114,17 +116,18 @@ class Execute:
 
             if position() == 0 and t in order_execute: del order_execute[: order_execute.index(t) + 1]
 
-    def fill(self, t):
+    def fill(self, t, commission):
+        adj_price = util.adjust_price(trade=t, commission=commission)
 
         if t.is_long:
-
-            assert self.__equity >= t.trading_price * t.units
+            assert self.__equity >= adj_price * t.units
 
             buy_price.append(t.trading_price)
             buy_date.append(t.trading_date)
             buy_unit.append(t.units)
+            amnt_paying.append(adj_price * t.units)
 
-            self.__equity -= t.units * t.trading_price
+            self.__equity -= t.units * adj_price
             setattr(t, 'is_fill', True)
 
         elif t.is_short:
@@ -132,11 +135,11 @@ class Execute:
             sell_price.append(t.trading_price)
             sell_date.append(t.trading_date)
             sell_unit.append(t.units)
-            self.__equity += abs(t.units) * t.trading_price
+            amnt_receiving.append(abs(t.units) * adj_price)
+            self.__equity += abs(t.units) * adj_price
             setattr(t, 'is_fill', True)
 
-    @staticmethod
-    def _touch_stop_loss(order, price):
+    def _touch_stop_loss(self, order, price):
 
         if order.is_long:
             con = order.stop_loss and price <= order.stop_loss_price and order.is_filled and order.trading_date not in [
@@ -149,7 +152,7 @@ class Execute:
 
             return con
 
-    def split_add_pos_order(self, trade_order, add_position_order: list):
+    def split_add_pos_order(self, trade_order, add_position_order: list, commission):
         """
         split the order which include overweight order into a list of single order and fill them
         e.g. a sell order [with 6 units has an parent order and an overweight order] becomes
@@ -177,7 +180,7 @@ class Execute:
 
                 temp_order_list.append(ct)
         for temp_o in temp_order_list:
-            self.fill(temp_o)
+            self.fill(temp_o, commission)
 
         add_position_order.clear()
 

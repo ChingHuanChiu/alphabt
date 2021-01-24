@@ -9,5 +9,7 @@ order_queue = []
 order_execute = []
 add_position_long_order = []
 add_position_short_order = []
+amnt_paying = []
+amnt_receiving = []
 position_list = [0]
 

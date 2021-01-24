@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from talib import abstract
 
+
 def annual_profit(record_df_year):
     return [round((record_df_year['profit(元)'].sum()), 2)]
 
@@ -38,6 +39,8 @@ def profit_factor(record_df_year):
 
 def max_loss(record_df_year):
     max_loss = round(record_df_year[record_df_year['profit(元)'] < 0]['profit(元)'].min(), 0)
+    if np.isnan(max_loss):
+        max_loss = 0
     return [max_loss]
 
 
@@ -48,6 +51,8 @@ def stock_max_loss(data, year):
 
 def max_profit(record_df_year):
     mp = round(record_df_year[record_df_year['profit(元)'] > 0]['profit(元)'].max(), 0)
+    if np.isnan(mp):
+        mp = 0
     return [mp]
 
 
@@ -61,12 +66,6 @@ def year_return(record_df_year):
     return [year_ret]
 
 
-def net_year_return(record_df_year, handling_fee, tax):
-    year_ret = \
-    round((((1 + record_df_year['return'] * (1 - (2 * handling_fee + tax))).cumprod() - 1) * 100), 2).to_list()[-1]
-    return [year_ret]
-
-
 def stock_year_return(data, year):
     '''
     the annual return of per stock, buy with the 'open' price on first day and
@@ -77,7 +76,7 @@ def stock_year_return(data, year):
 
 
 def average_trade_return(performance_df):
-    ave_trade_ret = round(((performance_df['年度報酬率(%)'] * 0.01) / performance_df['交易總次數(次)']) * 100, 2)
+    ave_trade_ret = round(((performance_df['當年度報酬率(%)'] * 0.01) / performance_df['交易總次數(次)']) * 100, 2)
     return ave_trade_ret
 
 
@@ -111,15 +110,17 @@ def mdd(df, log):
 def year_sharpe(df):
     # len_year = len(df.index)
 
-    ret_year = df['年化報酬率(%)'].mean()
-    std_year = df['年化報酬率(%)'].std()
+    ret_year = df['年化報酬率(%)'].values[-1]
+    std_year = df['當年度報酬率(%)'].std()
     sharpe = (ret_year - 0.01) / std_year
-    return sharpe
+    return round(sharpe, 3)
 
 
-def cost(trading_df, buyunit, sellunit):
-    return np.where(trading_df.SellDate > trading_df.BuyDate, trading_df.BuyPrice * buyunit,
-                    trading_df.SellPrice * sellunit * -1)
+def calmar_ratio(per, log):
+    ret_year = per['年化報酬率(%)'].values[-1]
+    MDD = log['MDD(%)'].max()
+    calmar = ret_year / MDD
+    return round(calmar, 3)
 
 
 def geo_yearly_ret(per):
@@ -134,7 +135,7 @@ def geo_yearly_ret(per):
     return geo_ret_list
 
 
-def index_cummulate_return(start, end, index='^GSPC'):
+def index_accumulate_return(start, end, index='^GSPC'):
     data = pd.read_pickle('index_close.pkl')[start: end]
     cum_return = round(((1 + data.pct_change()).cumprod() - 1) * 100, 3)
     cum_return = cum_return[index]
@@ -145,7 +146,7 @@ def index_geo_yearly_ret(df, per, index='^GSPC'):
     start = str(df.index[0].year)
     end = str(df.index[-1].year)
 
-    cum_return = index_cummulate_return(start, end, index=index)
+    cum_return = index_accumulate_return(start, end, index=index)
     cum_ret = 1 + (cum_return * 0.01)
     # print(cum_ret)
     year_len = int(end) - int(start) + 1
@@ -160,28 +161,6 @@ def index_geo_yearly_ret(df, per, index='^GSPC'):
         res.append(geo_ret_dict[j])
 
     return res
-
-
-def daily_equity(daily_log, init_cap):
-    if init_cap is None:
-
-        x = [1] * len(daily_log)
-    else:
-        x = [init_cap] * len(daily_log)
-
-    return x
-
-
-def realized_pl(trade, daily_log):
-    x = np.zeros(len(daily_log))
-
-    for i in range(1, len(daily_log)):
-
-        if (daily_log['部位'].values[i] > 0) & (daily_log['部位'].values[i - 1] < 0):
-            x[i] = trade[i - 1] - trade[i]
-        elif (daily_log['部位'].values[i] <= 0) & (daily_log['部位'].values[i - 1] > 0):
-            x[i] = trade[i] - trade[i - 1]
-    return x
 
 
 def indicator(data, name, timeperiod=None):
