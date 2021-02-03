@@ -15,7 +15,7 @@ class Broker:
 
         order_queue.append(Order(unit, limit_price, stop_loss))
 
-    def check_order(self, ohlc, date):
+    def check_order(self, ohlc, date, commission):
         """
         check the order and set the information to order by different condition
         """
@@ -37,7 +37,9 @@ class Broker:
 
             if o.is_long:
                 if 1 > o.units > 0:
+
                     size = int((self.execute.equity * o.units) / trading_price)
+                    print(size, self.execute.equity)
                     setattr(o, 'units', size)
 
                 if o.stop_loss:
@@ -49,6 +51,12 @@ class Broker:
 
             elif o.is_short:
 
+                if -1 < o.units < 0:
+                    size = int((self.execute.equity * o.units) / trading_price)
+                    print(size, self.execute.equity)
+
+                    setattr(o, 'units', size)
+
                 if o.stop_loss:
                     stop_loss_price = o.trading_price * (1 + o.stop_loss)
                     setattr(o, 'stop_loss_prices', stop_loss_price)
@@ -57,6 +65,8 @@ class Broker:
                     add_position_short_order.append(o)
 
             order_execute.append(o)
+            self.work(ohlc, date=date, commission=commission)
+
         order_queue.clear()
 
     def work(self, price, date, commission):
@@ -120,7 +130,7 @@ class Execute:
         adj_price = util.adjust_price(trade=t, commission=commission)
 
         if t.is_long:
-            assert self.__equity >= adj_price * t.units
+            assert self.__equity >= adj_price * t.units, 'Your money is empty'
 
             buy_price.append(t.trading_price)
             buy_date.append(t.trading_date)
@@ -128,6 +138,7 @@ class Execute:
             amnt_paying.append(adj_price * t.units)
 
             self.__equity -= t.units * adj_price
+            print(t.units, 'long', self.__equity)
             setattr(t, 'is_fill', True)
 
         elif t.is_short:
@@ -136,7 +147,9 @@ class Execute:
             sell_date.append(t.trading_date)
             sell_unit.append(t.units)
             amnt_receiving.append(abs(t.units) * adj_price)
+
             self.__equity += abs(t.units) * adj_price
+            print(t.units, 'short', self.__equity)
             setattr(t, 'is_fill', True)
 
     def _touch_stop_loss(self, order, price):

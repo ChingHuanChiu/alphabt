@@ -19,9 +19,7 @@ class Bt:
             ohlc = self.data.values[i + 1, :]
 
             self.Strategy.signal(i)
-            self.Broker.check_order(ohlc, date=self.data.index[i + 1])
-
-            self.Broker.work(ohlc, date=self.data.index[i + 1], commission=self.com)
+            self.Broker.check_order(ohlc, date=self.data.index[i + 1], commission=self.com)
 
         if self.Strategy.position != 0:
             self.Broker.liquidation(pos=self.Strategy.position, price=self.data.values[-1, :], date=self.data.index[-1]
@@ -128,14 +126,14 @@ if __name__ == '__main__':
 
         def signal(self, index):
 
-            if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100) & self.empty_position:
-                # if self.short_position:
-                #     self.close_position()
-                self.buy(unit=10)
-            if (self.cci['CCI'][index] < 100) & (self.cci['CCI'][index - 1] > 100) & self.long_position:
-                # if self.long_position:
-                #     self.close_position()
-                self.sell()
+            if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100) :#& self.empty_position:
+                if self.short_position:
+                    self.close_position()
+                self.buy(unit=0.2)
+            if (self.cci['CCI'][index] < 100) & (self.cci['CCI'][index - 1] > 100) :#& self.long_position:
+                if self.long_position:
+                    self.close_position()
+                self.sell(unit=-0.2)
 
     s = time.time()
     log, per = Bt(CCI).run()

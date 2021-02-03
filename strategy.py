@@ -53,6 +53,3 @@ class Strategy(metaclass=ABCMeta):
     @property
     def short_position(self):
         return position() < 0
-
-
-

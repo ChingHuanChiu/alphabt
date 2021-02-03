@@ -28,3 +28,8 @@ def print_result(sharpe, calmar):
     print('-----------------------------|')
     print('calarm ratio', '|', calmar, '--------|')
     print('-----------------------------|')
+
+
+class DataInterface:
+    def __init__(self, **kwargs):
+        self.trading_price = kwargs['ohlc'][3]
