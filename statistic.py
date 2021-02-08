@@ -37,6 +37,16 @@ def profit_factor(record_df_year):
     return [pf]
 
 
+def equity(log, init_equity):
+    eq = log['profit(元)'].cumsum() + init_equity
+    return eq
+
+
+def equity_return(log, init_equity):
+    first = (log.Equity[0] - init_equity) / init_equity
+    return log.Equity.pct_change().fillna(value=first) * 100
+
+
 def max_loss(record_df_year):
     max_loss = round(record_df_year[record_df_year['profit(元)'] < 0]['profit(元)'].min(), 0)
     if np.isnan(max_loss):
@@ -61,8 +71,8 @@ def stock_max_profit(data, year):
     return [mp]
 
 
-def year_return(record_df_year):
-    year_ret = round(((((1 + record_df_year['return']).cumprod()) - 1) * 100), 2).to_list()[-1]
+def year_return(record_df_year, field:str):
+    year_ret = round(((((1 + record_df_year[field]*0.01).cumprod()) - 1) * 100), 2).to_list()[-1]
     return [year_ret]
 
 
@@ -80,8 +90,8 @@ def average_trade_return(performance_df):
     return ave_trade_ret
 
 
-def cum_year_return(record_df, count):
-    cum_year_ret = round(((1 + record_df['return']).cumprod()[count - 1] - 1) * 100, 2)
+def cum_year_return(record_df, count, field:str):
+    cum_year_ret = round(((1 + record_df[field]*0.01).cumprod()[count - 1] - 1) * 100, 2)
     return [cum_year_ret]
 
 
@@ -107,28 +117,29 @@ def mdd(df, log):
     return [round(x * 100, 3) for x in mdd_list]
 
 
+
 def year_sharpe(df):
     # len_year = len(df.index)
 
-    ret_year = df['年化報酬率(%)'].values[-1]
-    std_year = df['當年度報酬率(%)'].std()
+    ret_year = df['權益年化報酬率(%)'].values[-1]
+    std_year = df['當年度權益報酬率(%)'].std()
     sharpe = (ret_year - 0.01) / std_year
     return round(sharpe, 3)
 
 
 def calmar_ratio(per, log):
-    ret_year = per['年化報酬率(%)'].values[-1]
+    ret_year = per['權益年化報酬率(%)'].values[-1]
     MDD = log['MDD(%)'].max()
     calmar = ret_year / MDD
     return round(calmar, 3)
 
 
-def geo_yearly_ret(per):
+def geo_yearly_ret(per, field='累積年度報酬(%)'):
     '''
     :return: 年化報酬率
     '''
     geo_ret_list = []
-    cum_ret = list(1 + per['累積年度報酬(%)'] * 0.01)
+    cum_ret = list(1 + per[field] * 0.01)
     for i in range(len(per)):
         yearly_ret = pow(cum_ret[i], 1 / (i + 1)) - 1
         geo_ret_list.append(round(yearly_ret * 100, 2))

@@ -39,7 +39,6 @@ class Broker:
                 if 1 > o.units > 0:
 
                     size = int((self.execute.equity * o.units) / trading_price)
-                    print(size, self.execute.equity)
                     setattr(o, 'units', size)
 
                 if o.stop_loss:
@@ -53,7 +52,6 @@ class Broker:
 
                 if -1 < o.units < 0:
                     size = int((self.execute.equity * o.units) / trading_price)
-                    print(size, self.execute.equity)
 
                     setattr(o, 'units', size)
 
@@ -138,7 +136,6 @@ class Execute:
             amnt_paying.append(adj_price * t.units)
 
             self.__equity -= t.units * adj_price
-            print(t.units, 'long', self.__equity)
             setattr(t, 'is_fill', True)
 
         elif t.is_short:
@@ -149,7 +146,6 @@ class Execute:
             amnt_receiving.append(abs(t.units) * adj_price)
 
             self.__equity += abs(t.units) * adj_price
-            print(t.units, 'short', self.__equity)
             setattr(t, 'is_fill', True)
 
     def _touch_stop_loss(self, order, price):
