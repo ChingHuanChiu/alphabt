@@ -1,5 +1,5 @@
 import pandas as pd
-
+from accessor import order_execute
 
 def reset_data(dataframe: pd.DataFrame):
     dataframe.index = pd.to_datetime(dataframe.index)
@@ -30,6 +30,29 @@ def print_result(sharpe, calmar):
     print('-----------------------------|')
 
 
-class DataInterface:
-    def __init__(self, **kwargs):
-        self.trading_price = kwargs['ohlc'][3]
+def touch_stop_loss(order, price, date):
+
+    if order.is_long:
+        con = order.stop_loss and price <= order.stop_loss_prices and order.is_filled and date not in [
+            order.trading_date for order in order_execute]
+
+        return con
+    else:
+        con = order.stop_loss and price >= order.stop_loss_prices and order.is_filled and date not in [
+            order.trading_date for order in order_execute]
+
+        return con
+
+
+def touch_stop_profit(order, price, date):
+
+    if order.is_long:
+        con = order.stop_profit and price >= order.stop_profit_prices and order.is_filled and date not in [
+            order.trading_date for order in order_execute]
+
+        return con
+    else:
+        con = order.stop_profit and price <= order.stop_profit_prices and order.is_filled and date not in [
+            order.trading_date for order in order_execute]
+
+        return con

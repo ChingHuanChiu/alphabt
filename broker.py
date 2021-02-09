@@ -11,9 +11,9 @@ class Broker:
 
         self.execute = Execute(equity)  # Execute
 
-    def make_order(self, unit, limit_price, stop_loss):
+    def make_order(self, unit, limit_price, stop_loss, stop_profit):
 
-        order_queue.append(Order(unit, limit_price, stop_loss))
+        order_queue.append(Order(unit, limit_price, stop_loss, stop_profit))
 
     def check_order(self, ohlc, date, commission):
         """
@@ -45,6 +45,10 @@ class Broker:
                     stop_loss_price = o.trading_price * (1 - o.stop_loss)
                     setattr(o, 'stop_loss_prices', stop_loss_price)
 
+                if o.stop_profit:
+                    stop_profit_price = o.trading_price * (1 + o.stop_profit)
+                    setattr(o, 'stop_profit_prices', stop_profit_price)
+
                 if not o.is_parents:
                     add_position_long_order.append(o)
 
@@ -59,6 +63,10 @@ class Broker:
                     stop_loss_price = o.trading_price * (1 + o.stop_loss)
                     setattr(o, 'stop_loss_prices', stop_loss_price)
 
+                if o.stop_profit:
+                    stop_profit_price = o.trading_price * (1 - o.stop_profit)
+                    setattr(o, 'stop_profit_prices', stop_profit_price)
+
                 if not o.is_parents:
                     add_position_short_order.append(o)
 
@@ -66,6 +74,26 @@ class Broker:
             self.work(ohlc, date=date, commission=commission)
 
         order_queue.clear()
+
+        self.check_if_sl_or_sp(ohlc=ohlc, date=date, commission=commission)
+
+    def check_if_sl_or_sp(self, ohlc, date, commission):
+        for t in order_execute:
+            origin_o = deepcopy(t).is_parents
+            if util.touch_stop_loss(order=t, price=ohlc[3], date=date) :
+
+                t.replace(_unit=-t.units, _trading_price=t.stop_loss_prices, trading_date=date, _is_fill=False,
+                          _is_parent=False, stop_loss=None)
+
+            elif util.touch_stop_profit(order=t, price=ohlc[3], date=date):
+                t.replace(_unit=-t.units, _trading_price=t.stop_profit_prices, trading_date=date, _is_fill=False,
+                          _is_parent=False, stop_loss=None)
+
+
+            if not origin_o:
+                order_execute.remove(t)
+
+        self.work(ohlc, date=date, commission=commission)
 
     def work(self, price, date, commission):
 
@@ -75,7 +103,7 @@ class Broker:
         """
         clean the last position
         """
-        o = Order(-1 * pos, limit_price=None, stop_loss=None, is_fill=False)
+        o = Order(-1 * pos, limit_price=None, stop_loss=None, stop_profit=None, is_fill=False)
         setattr(o, 'trading_price', price[0])
         setattr(o, 'trading_date', date)
         order_execute.append(o)
@@ -115,12 +143,12 @@ class Execute:
                 else:
                     self.fill(t, commission)
 
-            if self._touch_stop_loss(order=t, price=c):
-                origin_o = deepcopy(t).is_parents
-                t.replace(units=-t.units, trading_prices=t.stop_loss_price, trading_date=date, is_filled=False,
-                          is_parent=False, stop_loss=None)
-                if not origin_o:
-                    order_execute.remove(t)
+            # if self._touch_stop_loss(order=t, price=c):
+            #     origin_o = deepcopy(t).is_parents
+            #     t.replace(units=-t.units, trading_prices=t.stop_loss_price, trading_date=date, is_filled=False,
+            #               is_parent=False, stop_loss=None)
+            #     if not origin_o:
+            #         order_execute.remove(t)
 
             if position() == 0 and t in order_execute: del order_execute[: order_execute.index(t) + 1]
 
@@ -136,7 +164,7 @@ class Execute:
             amnt_paying.append(adj_price * t.units)
 
             self.__equity -= t.units * adj_price
-            setattr(t, 'is_fill', True)
+            setattr(t, 'is_filled', True)
 
         elif t.is_short:
 
@@ -146,20 +174,8 @@ class Execute:
             amnt_receiving.append(abs(t.units) * adj_price)
 
             self.__equity += abs(t.units) * adj_price
-            setattr(t, 'is_fill', True)
+            setattr(t, 'is_filled', True)
 
-    def _touch_stop_loss(self, order, price):
-
-        if order.is_long:
-            con = order.stop_loss and price <= order.stop_loss_price and order.is_filled and order.trading_date not in [
-                order.trading_date for order in order_execute]
-
-            return con
-        else:
-            con = order.stop_loss and price <= order.stop_loss_price and order.is_filled and order.trading_date not in [
-                order.trading_date for order in order_execute]
-
-            return con
 
     def split_add_pos_order(self, trade_order, add_position_order: list, commission):
         """
@@ -185,7 +201,7 @@ class Execute:
 
                 ct.units = -_t.units
                 ct.trading_date = trade_order.trading_date
-                ct.trading_prices = trade_order.trading_prices
+                ct.trading_prices = trade_order.trading_price
 
                 temp_order_list.append(ct)
         for temp_o in temp_order_list:

@@ -112,6 +112,10 @@ def mdd(df, log):
 
         elif start > end:
             dd = -(df[end:start]['close'].cummin() - df[end:start]['close']).min() / df[end:start]['close'].min()
+
+        else:
+            dd = 0
+
         mdd_list.append(dd)
 
     return [round(x * 100, 3) for x in mdd_list]

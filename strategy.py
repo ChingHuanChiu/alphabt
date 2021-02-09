@@ -12,17 +12,19 @@ class Strategy(metaclass=ABCMeta):
         the main strategy logic
         """
 
-    def buy(self, unit=None, limit_price=None, stop_loss=None):
+    def buy(self, unit=None, limit_price=None, stop_loss=None, stop_profit=None):
         if unit is None:
             unit = position()
         assert unit > 0, 'in buy action, unit must be positive'
-        Broker(self.init_capital).make_order(unit=unit, limit_price=limit_price, stop_loss=stop_loss)
+        Broker(self.init_capital).make_order(unit=unit, limit_price=limit_price, stop_loss=stop_loss,
+                                             stop_profit=stop_profit)
 
-    def sell(self, unit=None, limit_price=None, stop_loss=None):
+    def sell(self, unit=None, limit_price=None, stop_loss=None, stop_profit=None):
         if unit is None:
             unit = -position()
         assert unit < 0, ' in sell action, unit must be negative'
-        Broker(self.init_capital).make_order(unit=unit, limit_price=limit_price, stop_loss=stop_loss)
+        Broker(self.init_capital).make_order(unit=unit, limit_price=limit_price, stop_loss=stop_loss,
+                                             stop_profit=stop_profit)
 
     def indicator(self, name, timeperiod=None):
 
@@ -38,7 +40,7 @@ class Strategy(metaclass=ABCMeta):
         """
         if position() != 0:
             # print("in close", position_list[-1])
-            Broker(self.init_capital).make_order(unit=-1 * position(), limit_price=None, stop_loss=None)
+            Broker(self.init_capital).make_order(unit=-1 * position(), limit_price=None, stop_loss=None, stop_profit=None)
         else:
             pass
 
@@ -53,3 +55,4 @@ class Strategy(metaclass=ABCMeta):
     @property
     def short_position(self):
         return position() < 0
+    
