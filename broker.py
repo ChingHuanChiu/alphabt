@@ -89,7 +89,6 @@ class Broker:
                 t.replace(_unit=-t.units, _trading_price=t.stop_profit_prices, trading_date=date, _is_fill=False,
                           _is_parent=False, stop_loss=None)
 
-
             if not origin_o:
                 order_execute.remove(t)
 

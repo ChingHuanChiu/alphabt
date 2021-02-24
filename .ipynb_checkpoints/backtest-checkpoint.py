@@ -94,7 +94,7 @@ class Report:
 
         out_put['年化報酬率(%)'] = statistic.geo_yearly_ret(out_put)
         out_put['權益年化報酬率(%)'] = statistic.geo_yearly_ret(out_put, field='權益累積年度報酬(%)')
-        out_put['大盤年化報酬率(%)'] = statistic.index_geo_yearly_ret(self.df, out_put, index='^GSPC')
+        # out_put['大盤年化報酬率(%)'] = statistic.index_geo_yearly_ret(self.df, out_put, index='^GSPC')
         util.print_result(sharpe=statistic.year_sharpe(out_put), calmar=statistic.calmar_ratio(out_put, record_df))
 
         return out_put
@@ -115,7 +115,23 @@ if __name__ == '__main__':
     data = pd.read_pickle('sp500.pkl')
     data = data[data.symbol == 'AMD']
 
+    class CCI(Strategy):
+        def __init__(self):
+            # self.data = Data().symbol_data(symbol=['AMD'])
+            self.init_capital = 10000
+            self.data = data
+            self.cci = self.indicator('CCI')
 
+        def signal(self, index):
+
+            if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100) :#& self.empty_position:
+                if self.short_position:
+                    self.close_position()
+                self.buy(unit=0.1, stop_loss=0.2, stop_profit=0.3)
+            if (self.cci['CCI'][index] < 100) & (self.cci['CCI'][index - 1] > 100) :#& self.long_position:
+                if self.long_position:
+                    self.close_position()
+                self.sell(unit=-0.2, stop_loss=0.2, stop_profit=0.3)
 
 
     log, per = Bt(CCI).run()

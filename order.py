@@ -1,7 +1,3 @@
-from accessor import *
-import numpy as np
-
-
 class Order:
     def __init__(self, unit, limit_price, stop_loss, stop_profit, trading_date=None, is_fill=False, is_parent=True):
         self._unit = unit

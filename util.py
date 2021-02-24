@@ -1,6 +1,7 @@
 import pandas as pd
 from accessor import order_execute
 
+
 def reset_data(dataframe: pd.DataFrame):
     dataframe.index = pd.to_datetime(dataframe.index)
     dataframe.columns = [c.lower() for c in dataframe.columns]
