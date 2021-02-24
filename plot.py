@@ -57,7 +57,7 @@ def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param
         sell = pd.Series(log['SellPrice'].values, index=log['SellDate']).drop_duplicates().rename('SellPrice')
         _log = pd.concat([buy, sell, empty_series], 1)
 
-        index_return = statistic.index_cummulate_return(str(log['BuyDate'][0].year), str(log['BuyDate'].iloc[-1].year), index='^GSPC')
+        index_return = statistic.index_accumulate_return(str(log['BuyDate'][0].year), str(log['BuyDate'].iloc[-1].year), index='^GSPC')
         fig.add_trace(go.Scatter(x=date, y=log['累積報酬率(%)'],
                                  mode='lines',
                                  name='累積報酬率(%)', ), row=2, col=1)

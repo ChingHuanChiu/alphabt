@@ -1,4 +1,3 @@
-
 buy_price = []
 buy_date = []
 buy_unit = []

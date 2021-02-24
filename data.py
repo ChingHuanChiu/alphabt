@@ -1,7 +1,7 @@
-
+import sys
+sys.path.append('../')
 import pandas as pd
 import os
-
 from sqlalchemy import create_engine
 
 class Data:
