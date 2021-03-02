@@ -1,12 +1,5 @@
 # alphabt
 
-Created: Feb 25, 2021 2:41 PM
-Created By: 敬桓 邱
-Last Edited By: 敬桓 邱
-Last Edited Time: Feb 25, 2021 5:41 PM
-Status: In Review 👀
-Type: Project Kickoff 🚀
-
 # Overview
 
 Back test the strategy on stocks  and buy(sell) at next open when the signal appears，the following features:
