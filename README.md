@@ -1,4 +1,3 @@
-![newplot](https://user-images.githubusercontent.com/51486531/109655275-10182880-7b9e-11eb-85d8-2ea2f2829c67.png)
 # alphabt# alphabt
 
 Created: Feb 25, 2021 2:41 PM
