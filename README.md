@@ -1,3 +1,4 @@
+![newplot](https://user-images.githubusercontent.com/51486531/109655275-10182880-7b9e-11eb-85d8-2ea2f2829c67.png)
 # alphabt# alphabt
 
 Created: Feb 25, 2021 2:41 PM
@@ -48,15 +49,16 @@ Bt(TEMA).get_plot(subplot_technical_index=['MA'], overlap=['TEMA'], sub_plot_par
 
 - trading  log
 
-![alphabt%2001b39ba63d0f4183916c93d86d578911/Untitled.png](alphabt%2001b39ba63d0f4183916c93d86d578911/Untitled.png)
+![Untitled](https://user-images.githubusercontent.com/51486531/109655346-232af880-7b9e-11eb-82d1-e59bda6cbb8e.png)
+
 
 - performance
 
-![alphabt%2001b39ba63d0f4183916c93d86d578911/Untitled%201.png](alphabt%2001b39ba63d0f4183916c93d86d578911/Untitled%201.png)
+![Untitled 1](https://user-images.githubusercontent.com/51486531/109655366-28884300-7b9e-11eb-8297-d384e71e5c3c.png)
 
 - Figure
 
-    ![alphabt%2001b39ba63d0f4183916c93d86d578911/newplot.png](alphabt%2001b39ba63d0f4183916c93d86d578911/newplot.png)
+    ![newplot](https://user-images.githubusercontent.com/51486531/109655384-2d4cf700-7b9e-11eb-8f0e-6e71a47efe13.png)
 
 # Future Work
 
