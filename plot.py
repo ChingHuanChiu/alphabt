@@ -8,8 +8,6 @@ import statistic
 import pandas as pd
 from plotly.subplots import make_subplots
 
-
-
 def add_trace(fig, tech_df, row):
     '''
     畫技術指標
