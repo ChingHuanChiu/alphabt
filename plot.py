@@ -27,9 +27,9 @@ def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param
     row_heights = [450] + [300] * (2 + len(subplot_technical_index))
     specs = [[{"secondary_y": True}]] * (3 + len(subplot_technical_index))
     if subplot_technical_index:
-        subplot_titles = ["收盤價", "累積報酬率", 'MDD'] + [x for x in subplot_technical_index]
+        subplot_titles = ["收盤價", "累積報酬率", 'MDD(%)'] + [x for x in subplot_technical_index]
     else:
-        subplot_titles = ["收盤價", "累積報酬率", 'MDD']
+        subplot_titles = ["收盤價", "累積報酬率", 'MDD(%)']
 
     fig = make_subplots(rows=3 + len(subplot_technical_index), cols=1, row_heights=row_heights,shared_xaxes=True,
                         subplot_titles=subplot_titles, specs=specs)
@@ -47,7 +47,7 @@ def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param
     fig.add_trace(go.Scatter(x=data.index, y=data.close,
                              mode='lines',
                              name='close'), row=1, col=1)
-    fig.add_trace(go.Bar(name='volume', x=data.index, y=data.volume, marker=dict(color=data.diag,  # 设置条形图的颜色
+    fig.add_trace(go.Bar(name='volume', x=data.index, y=data.volume, marker=dict(color=data.diag,
                                                                                  line=dict(color=data.diag,width=1.0,))),
                                                                                   secondary_y=True, row=1, col=1)
     if log is not None:
