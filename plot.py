@@ -18,7 +18,8 @@ def add_trace(fig, tech_df, row):
                                  name=col, line=dict(width=1)), row=row, col=1)
 
 
-def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param=None, overlap_param=None, log=None):
+def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param=None, overlap_param=None,
+               log=None, callback=None):
     data['diag'] = np.empty(len(data))
     data.diag[data.close > data.close.shift()] = '#f6416c'
     data.diag[data.close <= data.close.shift()] = '#7bc0a3'
@@ -45,9 +46,12 @@ def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param
     fig.add_trace(go.Scatter(x=data.index, y=data.close,
                              mode='lines',
                              name='close'), row=1, col=1)
+    fig.add_trace(go.Scatter(x=data.index, y=callback,
+                             mode='lines',
+                             name='customer indicator'), secondary_y=True, row=1, col=1)
     fig.add_trace(go.Bar(name='volume', x=data.index, y=data.volume, marker=dict(color=data.diag,
-                                                                                 line=dict(color=data.diag,width=1.0,))),
-                                                                                  secondary_y=True, row=1, col=1)
+                                                                                 line=dict(color=data.diag,width=1.0,)))
+                                                                                    , secondary_y=True, row=1, col=1)
     if log is not None:
         date = pd.to_datetime(np.where(log.KeepDay > 0, log.SellDate, log.BuyDate))
         empty_series = pd.Series(index=data.index)

@@ -31,9 +31,10 @@ class Bt:
 
         return report, performance
 
-    def get_plot(self, subplot_technical_index: list, overlap=None, sub_plot_param=None, overlap_param=None, log=None):
+    def get_plot(self, subplot_technical_index: list, overlap=None, sub_plot_param=None, overlap_param=None,
+                 log=None, callback=None):
         get_plotly(self.data, subplot_technical_index, overlap=overlap, sub_plot_param=sub_plot_param
-                   , overlap_param=overlap_param, log=log)
+                   , overlap_param=overlap_param, log=log, callback=callback)
 
 
 class Report:
@@ -103,19 +104,4 @@ class Report:
         return self.report(), self.yearly_performance()
 
 
-if __name__ == '__main__':
-    from strategy import Strategy
-    from backtest import Bt
-    from plot import get_plotly
-    from data import Data
 
-    import pandas as pd
-    import time
-
-    data = pd.read_pickle('sp500.pkl')
-    data = data[data.symbol == 'AMD']
-
-
-
-
-    log, per = Bt(CCI).run()
