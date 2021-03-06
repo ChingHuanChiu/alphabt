@@ -3,7 +3,6 @@ from backtest import Bt
 from statistic import indicator
 import matplotlib.pyplot as plt
 from pandas.tseries.offsets import BDay
-from datetime import datetime
 from typing import Callable
 from data import Data
 import pandas as pd
@@ -21,7 +20,6 @@ class Portfolio:
         """
         assert isinstance(hold_days, int), 'the type of hold_dates should be int.'
 
-        # dates = self._date_iter_periodicity(hold_days=hold_days)
         signal_dict = self._strategy_ticker_signal(strategy)  # {ticker: }
 
         ret_output = pd.Series()
@@ -29,14 +27,14 @@ class Portfolio:
 
         for sdate, edate in self._date_iter_periodicity(hold_days=hold_days):
             ret_df = pd.DataFrame()
-            selected_ticker_list = self._selected_ticker(signal_dict, sdate)
+            selected_ticker_list = self._selected_ticker(signal_dict, sdate)[:4]
             weight = [0.5] * len(selected_ticker_list)
 
             for s, w in zip(selected_ticker_list, weight):
                 sdata = self.data[self.data.symbol == s]
 
                 # 配合alpha，訊號出現隔天才交易，所以要將買賣訊號的日期往前一天
-                print(s, sdate, edate,'---------------',sdate - BDay(1))
+                print(s, sdate, edate,'---------------', sdate - BDay(1))
                 log = buy_and_hold(sdata, sdate - BDay(1), edate - BDay(1))[0]
 
                 log['symbol'] = s
@@ -53,7 +51,6 @@ class Portfolio:
             ret = ret_df.dot(weight)
 
             ret_output = pd.concat([ret_output, ret])
-        print(ret_output)
         ret_output = ret_output + 1
         ret_output[0] = 1
         cum_ret_result = round(ret_output.cumprod(), 3).dropna()
@@ -66,7 +63,7 @@ class Portfolio:
         return log_df, self.portfolio_log(log_df)
 
     def _strategy_ticker_signal(self, strategy):
-        d = {ticker: df for ticker, df in data.groupby('symbol')}
+        d = {ticker: df for ticker, df in self.data.groupby('symbol')}
         signal_dict = {ticker: strategy(sub_data) for ticker, sub_data in d.items()}
         return signal_dict
 
@@ -85,9 +82,9 @@ class Portfolio:
         date = self.start_date
         # if the start date is not the business date
         while pd.to_datetime(date) < pd.to_datetime(self.end_date):
-            date = self.data.loc[date:].index[0]
+
+            date = self.data.loc[str(date):].index[0]
             date = pd.to_datetime(date)
-            # print('----------->', date)
             yield date, (date + BDay(hold_days))
             date += BDay(hold_days)
 
@@ -114,7 +111,6 @@ def buy_and_hold(data, start_date, end_date):
             self.init_capital = 1000000
 
         def signal(self, ind):
-            # print(self.data.index[ind], start_date, self.data.index[ind] == start_date)#, self.data.index[ind] == end_date)
             if (self.data.index[ind] == start_date) & self.empty_position:
                 self.buy(unit=1)
 
@@ -124,17 +120,13 @@ def buy_and_hold(data, start_date, end_date):
     log, per = Bt(Port).run()
     return log, per
 
-if __name__ == '__main__':
 
-    data = pd.read_pickle('sp500.pkl')
-    data.columns = [c.lower() for c in data.columns]
+if __name__ == '__main__':
 
     def strategy(df):
 
         kd = indicator(df, 'STOCH')
-        # std = indicator(data, 'STDDEV')
         condition = (kd['slowk'] > kd['slowd']) & (kd['slowk'].shift() < kd['slowd'].shift())
-        # condition = (std['STDDEV'] > 1)  # & (cci['STDDEV'].shift(1) < -100)
         return condition
 
-    log, pot_log = Portfolio(start_date='2010-01-10', end_date='2012-01-01').run(hold_days=120, strategy=strategy)
+    log, pot_log = Portfolio(start_date='2010-01-10', end_date='2011-01-01').run(hold_days=120, strategy=strategy)
