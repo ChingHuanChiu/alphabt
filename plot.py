@@ -1,6 +1,7 @@
 from sys import path
 path.extend(['./', './alphabt'])
-
+import warnings
+warnings.filterwarnings('ignore')
 import numpy as np
 import plotly.graph_objects as go
 import plotly
@@ -46,7 +47,7 @@ def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param
     fig.add_trace(go.Scatter(x=data.index, y=data.close,
                              mode='lines',
                              name='close'), row=1, col=1)
-    fig.add_trace(go.Scatter(x=data.index, y=callback,
+    fig.add_trace(go.Scatter(x=data.index, y=callback(),
                              mode='lines',
                              name='customer indicator'), secondary_y=True, row=1, col=1)
     fig.add_trace(go.Bar(name='volume', x=data.index, y=data.volume, marker=dict(color=data.diag,
