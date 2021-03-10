@@ -1,13 +1,15 @@
 from strategy import Strategy
 from backtest import Bt
-from statistic import indicator
+from statistic import indicator, index_accumulate_return
+
+import pandas as pd
+from typing import Callable
 import matplotlib.pyplot as plt
 from pandas.tseries.offsets import BDay
-from typing import Callable
-from data import Data
-import pandas as pd
 from pandas.tseries.holiday import USFederalHolidayCalendar
 from pandas.tseries.offsets import CustomBusinessDay
+
+from data import Data
 
 US_BUSINESS_DAY = CustomBusinessDay(calendar=USFederalHolidayCalendar())
 
@@ -19,9 +21,7 @@ class Portfolio:
         self.end_date = end_date
 
     def run(self, hold_days: int, strategy: Callable):
-        """
-        TODO fix the code
-        """
+
         assert isinstance(hold_days, int), 'the type of hold_dates should be int.'
 
         signal_dict = self._strategy_ticker_signal(strategy)  # {ticker: }
@@ -31,14 +31,14 @@ class Portfolio:
 
         for sdate, edate in self._date_iter_periodicity(hold_days=hold_days):
             ret_df = pd.DataFrame()
-            selected_ticker_list = self._selected_ticker(signal_dict, sdate)
-            weight = [0.5] * len(selected_ticker_list)
+            selected_ticker_list = self._selected_ticker(signal_dict, sdate)[:3]
+            weight = [round(float(1 / len(selected_ticker_list)), 3)] * len(selected_ticker_list)
 
             for s, w in zip(selected_ticker_list, weight):
                 sdata = self.data[self.data.symbol == s]
 
                 # 配合alpha，訊號出現隔天才交易，所以要將買賣訊號的日期往前一天
-                print(s, sdate, edate,'---------------', sdate - BDay(1))
+                print(s, sdate, edate, '---------------', sdate - BDay(1))
                 log = buy_and_hold(sdata, sdate - 1 * US_BUSINESS_DAY, edate - 1 * US_BUSINESS_DAY)[0]
 
                 log['symbol'] = s
@@ -54,13 +54,9 @@ class Portfolio:
         ret_output = ret_output + 1
         ret_output[0] = 1
         cum_ret_result = round(ret_output.cumprod(), 3).dropna()
-
-        cum_ret_result.plot()
-        plt.xlabel('Date')
-        plt.ylabel('port. return(%)')
-        plt.title('Return')
-
-        return log_df, self.portfolio_log(log_df)
+        self._plot(cum_ret_result=cum_ret_result)
+        return log_df[['BuyDate', 'BuyPrice', 'SellDate', 'SellPrice', 'KeepDay', '報酬率(%)', 'symbol', 'weight']], \
+                self.portfolio_log(log_df)
 
     def _strategy_ticker_signal(self, strategy):
         d = {ticker: df for ticker, df in self.data.groupby('symbol')}
@@ -82,7 +78,6 @@ class Portfolio:
         date = self.start_date
         # if the start date is not the business date
         while pd.to_datetime(date) < pd.to_datetime(self.end_date):
-
             date = self.data.loc[str(date):].index[0]
             date = pd.to_datetime(date)
             yield date, (date + BDay(hold_days))
@@ -96,15 +91,26 @@ class Portfolio:
         for d in log.groupby('SellDate'):
             ret.append(d[1]['報酬率(%)'].dot(d[1]['weight']))
             mdd.append(d[1]['MDD(%)'].dot(d[1]['weight']))
+
         df['報酬率(%)'] = ret
         df['累積報酬率(%)'] = (((1 + df['報酬率(%)'] * 0.01).cumprod()) - 1) * 100
         df['MDD(%)'] = mdd
 
         return df
 
+    def _plot(self, cum_ret_result):
+        cum_ret_result.name = 'Portfolio'
+        index = index_accumulate_return(start=cum_ret_result.index[0], end=cum_ret_result.index[-1], index='^GSPC')
+
+        (1 + 0.01 * index).plot()
+        cum_ret_result.plot()
+        plt.xlabel('Date')
+        plt.ylabel('port. return(%)')
+        plt.title('Return')
+        plt.legend()
+
 
 def buy_and_hold(data, start_date, end_date):
-
     class Port(Strategy):
         def __init__(self):
             self.data = data
@@ -122,11 +128,10 @@ def buy_and_hold(data, start_date, end_date):
 
 
 if __name__ == '__main__':
-
     def strategy(df):
-
         kd = indicator(df, 'STOCH')
         condition = (kd['slowk'] > kd['slowd']) & (kd['slowk'].shift() < kd['slowd'].shift())
         return condition
+
 
     log, pot_log = Portfolio(start_date='2010-01-10', end_date='2011-01-01').run(hold_days=120, strategy=strategy)
