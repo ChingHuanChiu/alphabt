@@ -6,6 +6,10 @@ from pandas.tseries.offsets import BDay
 from typing import Callable
 from data import Data
 import pandas as pd
+from pandas.tseries.holiday import USFederalHolidayCalendar
+from pandas.tseries.offsets import CustomBusinessDay
+
+US_BUSINESS_DAY = CustomBusinessDay(calendar=USFederalHolidayCalendar())
 
 
 class Portfolio:
@@ -27,7 +31,7 @@ class Portfolio:
 
         for sdate, edate in self._date_iter_periodicity(hold_days=hold_days):
             ret_df = pd.DataFrame()
-            selected_ticker_list = self._selected_ticker(signal_dict, sdate)[:4]
+            selected_ticker_list = self._selected_ticker(signal_dict, sdate)
             weight = [0.5] * len(selected_ticker_list)
 
             for s, w in zip(selected_ticker_list, weight):
@@ -35,16 +39,12 @@ class Portfolio:
 
                 # 配合alpha，訊號出現隔天才交易，所以要將買賣訊號的日期往前一天
                 print(s, sdate, edate,'---------------', sdate - BDay(1))
-                log = buy_and_hold(sdata, sdate - BDay(1), edate - BDay(1))[0]
+                log = buy_and_hold(sdata, sdate - 1 * US_BUSINESS_DAY, edate - 1 * US_BUSINESS_DAY)[0]
 
                 log['symbol'] = s
                 sub_sdata = sdata[log['BuyDate'][0]: log['SellDate'][0]]
                 ret_df[s] = sub_sdata['close'].pct_change()
-                # print({'symbol': s, 'buy_date': log['BuyDate'][0], 'sell_date': log['SellDate'][0]})
-
                 log['weight'] = [w]
-
-                #  log = log[['BuyPrice', 'BuyDay', 'SellPrice', 'SellDay', 'KeepDay', 'symbol', 'weight']]
 
                 log_df = pd.concat([log_df, log], 0)
 
