@@ -54,6 +54,5 @@ Bt(TEMA).get_plot(subplot_technical_index=['MA'], overlap=['TEMA'], sub_plot_par
 
 # Future Work
 
-- portfolio function
 - strategy simulation function
-- Update the figure
+- Other 
