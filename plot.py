@@ -42,10 +42,10 @@ def _main_fig(data, fig, callback):
 
 
 def _update_layout(fig):
+
     fig.update_layout(
         template="plotly_dark",
         xaxis_rangeslider_visible=False,
-        xaxis=dict(type='category'),
         height=1200, width=1200)
 
 
@@ -125,7 +125,6 @@ def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param
 
         row_heights = [450] + [300] * length_subplot_technical_index
         specs = [[{"secondary_y": True}]] * (1 + length_subplot_technical_index)
-        print(length_subplot_technical_index)
         fig = make_subplots(rows=1 + length_subplot_technical_index, cols=1, row_heights=row_heights, shared_xaxes=True,
                             subplot_titles=subplot_titles, specs=specs)
         _update_layout(fig)
