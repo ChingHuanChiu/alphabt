@@ -7,6 +7,7 @@ Back test the strategy on stocks  and buy(sell) at next open when the signal app
 - stop loss
 - stop profit
 - position overweight
+- TaLib feature
 
 # Usage
 
