@@ -3,5 +3,5 @@
 .DS_Store
 .idea/
 __pycache__/
-
+.ipynb*/
 *pycache*
