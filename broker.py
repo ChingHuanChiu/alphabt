@@ -37,7 +37,6 @@ class Broker:
 
             if o.is_long:
                 if 1 > o.units > 0:
-
                     size = int((self.execute.equity * o.units) / trading_price)
                     setattr(o, 'units', size)
 
@@ -80,7 +79,7 @@ class Broker:
     def check_if_sl_or_sp(self, ohlc, date, commission):
         for t in order_execute:
             origin_o = deepcopy(t).is_parents
-            if util.touch_stop_loss(order=t, price=ohlc[3], date=date) :
+            if util.touch_stop_loss(order=t, price=ohlc[3], date=date):
 
                 t.replace(_unit=-t.units, _trading_price=t.stop_loss_prices, trading_date=date, _is_fill=False,
                           _is_parent=False, stop_loss=None)
@@ -142,13 +141,6 @@ class Execute:
                 else:
                     self.fill(t, commission)
 
-            # if self._touch_stop_loss(order=t, price=c):
-            #     origin_o = deepcopy(t).is_parents
-            #     t.replace(units=-t.units, trading_prices=t.stop_loss_price, trading_date=date, is_filled=False,
-            #               is_parent=False, stop_loss=None)
-            #     if not origin_o:
-            #         order_execute.remove(t)
-
             if position() == 0 and t in order_execute: del order_execute[: order_execute.index(t) + 1]
 
     def fill(self, t, commission):
@@ -174,7 +166,6 @@ class Execute:
 
             self.__equity += abs(t.units) * adj_price
             setattr(t, 'is_filled', True)
-
 
     def split_add_pos_order(self, trade_order, add_position_order: list, commission):
         """
