@@ -70,7 +70,7 @@ class Broker:
                     add_position_short_order.append(o)
 
             order_execute.append(o)
-            self.work(ohlc, date=date, commission=commission)
+            self.work(commission=commission)
 
         order_queue.clear()
 
@@ -91,11 +91,11 @@ class Broker:
             if not origin_o:
                 order_execute.remove(t)
 
-        self.work(ohlc, date=date, commission=commission)
+        self.work(commission=commission)
 
-    def work(self, price, date, commission):
+    def work(self, commission):
 
-        self.execute.trading(price, date, commission)
+        self.execute.trading(commission)
 
     def liquidation(self, pos, price, date, commission):
         """
@@ -106,7 +106,7 @@ class Broker:
         setattr(o, 'trading_date', date)
         order_execute.append(o)
 
-        self.work(price=price, date=date, commission=commission)
+        self.work(commission=commission)
 
     def get_log(self):
         log_dict = {'BuyDate': buy_date, 'BuyPrice': buy_price, 'BuyUnits': buy_unit, 'CashPaying': amnt_paying,
@@ -125,9 +125,7 @@ class Execute:
     def __init__(self, equity):
         self.__equity = equity
 
-    def trading(self, price, date, commission):
-
-        c = price[3]
+    def trading(self, commission):
 
         for t in order_execute:
             if not t.is_filled:
