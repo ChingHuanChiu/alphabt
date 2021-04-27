@@ -46,6 +46,7 @@ def _update_layout(fig):
     fig.update_layout(
         template="plotly_dark",
         xaxis_rangeslider_visible=False,
+        xaxis=dict(type='category'),
         height=1200, width=1200)
 
 
@@ -73,6 +74,7 @@ def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param
     data['diag'] = np.empty(len(data))
     data.diag[data.close > data.close.shift()] = '#f6416c'
     data.diag[data.close <= data.close.shift()] = '#7bc0a3'
+    data.index = data.index.strftime("%Y/%m/%d")
 
     if log is not None:
         if subplot_technical_index:
