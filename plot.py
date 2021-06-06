@@ -1,6 +1,8 @@
 from sys import path
+
 path.extend(['./', './alphabt'])
 import warnings
+
 warnings.filterwarnings('ignore')
 import numpy as np
 import plotly.graph_objects as go
@@ -20,6 +22,7 @@ def add_trace(fig, tech_df, row):
 
 
 def _main_fig(data, fig, callback):
+
     fig.add_trace(go.Candlestick(x=data.index, open=data['open'], high=data['high'],
                                  low=data['low'],
                                  close=data['close']
@@ -30,8 +33,8 @@ def _main_fig(data, fig, callback):
                              name='close'), row=1, col=1)
 
     fig.add_trace(go.Bar(name='volume', x=data.index, y=data['volume'], marker=dict(color=data.diag,
-                                                                                 line=dict(color=data.diag,
-                                                                                           width=1.0, )))
+                                                                                    line=dict(color=data.diag,
+                                                                                              width=1.0, )))
                   , secondary_y=True, row=1, col=1)
 
     if callback:
@@ -42,7 +45,6 @@ def _main_fig(data, fig, callback):
 
 
 def _update_layout(fig):
-
     fig.update_layout(
         template="plotly_dark",
         xaxis_rangeslider_visible=False,
@@ -90,12 +92,11 @@ def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param
                             subplot_titles=subplot_titles, specs=specs)
         _update_layout(fig)
         _main_fig(data=data, fig=fig, callback=callback)
-        date = pd.to_datetime(np.where(log.KeepDay > 0, log.SellDate, log.BuyDate))
+        date = pd.Index(np.where(log.KeepDay > 0, log.SellDate, log.BuyDate))
         empty_series = pd.Series(index=data.index)
         buy = pd.Series(log['BuyPrice'].values, index=log['BuyDate']).drop_duplicates().rename('BuyPrice')
         sell = pd.Series(log['SellPrice'].values, index=log['SellDate']).drop_duplicates().rename('SellPrice')
         _log = pd.concat([buy, sell, empty_series], 1)
-
         index_return = statistic.index_accumulate_return(str(log['BuyDate'][0].year), str(log['BuyDate'].iloc[-1].year),
                                                          index='^GSPC')
         fig.add_trace(go.Scatter(x=date, y=log['累積報酬率(%)'],
@@ -106,16 +107,15 @@ def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param
                                  mode='lines',
                                  name='大盤累積報酬率(%)', ), row=2, col=1)
 
-        fig.add_trace(go.Scatter(x=_log.index, y=_log['BuyPrice'],
+        fig.add_trace(go.Scatter(x=data.index, y=_log['BuyPrice'],
                                  mode='markers',
                                  name='Buydate'), row=1, col=1)
 
-        fig.add_trace(go.Scatter(x=_log.index, y=_log['SellPrice'],
+        fig.add_trace(go.Scatter(x=data.index, y=_log['SellPrice'],
                                  mode='markers',
                                  name='Selldate'), row=1, col=1)
 
         fig.add_trace(go.Scatter(x=date, y=log['MDD(%)'] * -1, fill='tozeroy', name='MDD'), row=3, col=1)
-
         _subplot_indicator(subplot_technical_index, sub_plot_param, data, fig, row=4)
     else:
         if subplot_technical_index:
