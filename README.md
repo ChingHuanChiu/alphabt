@@ -1,4 +1,4 @@
-# alphabt
+# alphabt - Beta
 
 # Overview
 
@@ -56,4 +56,5 @@ Bt(TEMA).get_plot(subplot_technical_index=['MA'], overlap=['TEMA'], sub_plot_par
 # Future Work
 
 - strategy simulation function
-- Other 
+- correct portfolio bt
+
