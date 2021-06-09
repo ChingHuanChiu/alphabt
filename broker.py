@@ -36,7 +36,8 @@ class Broker:
             setattr(o, 'trading_date', date)
 
             if o.is_long:
-                if 1 > o.units > 0:
+                if 1 > o.units > 0 :
+                    o.units = 1 if o.units == 0.0001 else o.units
                     size = int((self.execute.equity * o.units) / trading_price)
                     setattr(o, 'units', size)
 
@@ -54,6 +55,7 @@ class Broker:
             elif o.is_short:
 
                 if -1 < o.units < 0:
+                    o.units = -1 if o.units == -0.0001 else o.units
                     size = int((self.execute.equity * o.units) / trading_price)
 
                     setattr(o, 'units', size)
