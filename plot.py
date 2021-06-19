@@ -22,10 +22,10 @@ def add_trace(fig, tech_df, row):
 
 
 def _main_fig(data, fig, callback):
-
     fig.add_trace(go.Candlestick(x=data.index, open=data['open'], high=data['high'],
                                  low=data['low'],
-                                 close=data['close']
+                                 close=data['close'],
+                                 name='K Bar'
                                  ), secondary_y=False, row=1, col=1)
 
     fig.add_trace(go.Scatter(x=data.index, y=data['close'],
@@ -93,10 +93,11 @@ def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param
         _update_layout(fig)
         _main_fig(data=data, fig=fig, callback=callback)
         date = pd.Index(np.where(log.KeepDay > 0, log.SellDate, log.BuyDate))
-        empty_series = pd.Series(index=data.index)
+
+        _log = pd.DataFrame(index=data.index)
         buy = pd.Series(log['BuyPrice'].values, index=log['BuyDate']).drop_duplicates().rename('BuyPrice')
         sell = pd.Series(log['SellPrice'].values, index=log['SellDate']).drop_duplicates().rename('SellPrice')
-        _log = pd.concat([buy, sell, empty_series], 1)
+        _log = pd.concat([buy, sell, _log], 1)
         try:
             index_return = statistic.index_accumulate_return(str(log['BuyDate'][0].year), str(log['BuyDate'].iloc[-1].year),
                                                              index='^GSPC')
