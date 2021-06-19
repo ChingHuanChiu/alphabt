@@ -13,15 +13,15 @@ class Strategy(metaclass=ABCMeta):
 
     def buy(self, unit=None, limit_price=None, stop_loss=None, stop_profit=None):
         if unit is None:
-            unit = position()
-        assert unit > 0, 'in buy action, unit must be positive'
+            unit = position() if position() != 0 else 0.0001 
+        assert unit > 0, f'in buy action, unit must be positive but {unit}'
         Broker(self.init_capital).make_order(unit=unit, limit_price=limit_price, stop_loss=stop_loss,
                                              stop_profit=stop_profit)
 
     def sell(self, unit=None, limit_price=None, stop_loss=None, stop_profit=None):
         if unit is None:
-            unit = -position()
-        assert unit < 0, ' in sell action, unit must be negative'
+            unit = -position() if position() != 0 else -0.0001 
+        assert unit < 0 or unit is None, f' in sell action, unit must be negative but {unit}'
         Broker(self.init_capital).make_order(unit=unit, limit_price=limit_price, stop_loss=stop_loss,
                                              stop_profit=stop_profit)
 

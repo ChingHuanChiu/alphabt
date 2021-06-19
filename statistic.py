@@ -3,6 +3,7 @@ sys.path.append('./')
 import numpy as np
 import pandas as pd
 from talib import abstract
+from data import Data
 
 
 def annual_profit(record_df_year):
@@ -10,12 +11,10 @@ def annual_profit(record_df_year):
 
 
 def buy_times(record_df_year):
-    # return [round(len(record_df_year['BuyDay']))]
     return [round(len(record_df_year[record_df_year.BuyDate < record_df_year.SellDate]))]
 
 
 def sell_times(record_df_year):
-    # return [round(len(record_df_year['SellDay']))]
     return [round(len(record_df_year[record_df_year.BuyDate > record_df_year.SellDate]))]
 
 
@@ -73,7 +72,7 @@ def stock_max_profit(data, year):
     return [mp]
 
 
-def year_return(record_df_year, field:str):
+def year_return(record_df_year, field: str):
     year_ret = round(((((1 + record_df_year[field]*0.01).cumprod()) - 1) * 100), 2).to_list()[-1]
     return [year_ret]
 
@@ -92,7 +91,7 @@ def average_trade_return(performance_df):
     return ave_trade_ret
 
 
-def cum_year_return(record_df, count, field:str):
+def cum_year_return(record_df, count, field: str):
     cum_year_ret = round(((1 + record_df[field]*0.01).cumprod()[count - 1] - 1) * 100, 2)
     return [cum_year_ret]
 
@@ -103,6 +102,12 @@ def cum_equity(record_df, count):
 
 
 def mdd(df, log):
+    """
+
+    :param df: stock data with OHLCV
+    :param log: trading log
+
+    """
     mdd_list = []
 
     for d in range(len(log)):
@@ -121,7 +126,6 @@ def mdd(df, log):
         mdd_list.append(dd)
 
     return [round(x * 100, 3) for x in mdd_list]
-
 
 
 def year_sharpe(df):
@@ -153,31 +157,26 @@ def geo_yearly_ret(per, field='累積年度報酬(%)'):
 
 
 def index_accumulate_return(start, end, index='^GSPC'):
-    data = pd.read_pickle('index_close.pkl')[start: end]
+    data = Data().get(symbol=[index], date_range=(start, end))['close']
     cum_return = round(((1 + data.pct_change()).cumprod() - 1) * 100, 3)
-    cum_return = cum_return[index]
+    # cum_return = cum_return[index]
     return cum_return
 
 
-def index_geo_yearly_ret(df, per, index='^GSPC'):
+def index_geo_yearly_ret(df, index='^GSPC'):
     start = str(df.index[0].year)
     end = str(df.index[-1].year)
-
     cum_return = index_accumulate_return(start, end, index=index)
     cum_ret = 1 + (cum_return * 0.01)
-    # print(cum_ret)
     year_len = int(end) - int(start) + 1
 
     geo_ret_dict = {}
     for i, y in zip(range(year_len), cum_ret.index.year.unique()):
         yearly_ret = pow(cum_ret[str(y)][-1], 1 / (i + 1)) - 1
         geo_ret_dict[y] = round(yearly_ret * 100, 2)
-    # print(geo_ret_dict)
-    res = []
-    for j in per.index:
-        res.append(geo_ret_dict[j])
 
-    return res
+    return pd.DataFrame(list(geo_ret_dict.values()),
+                        index=list(geo_ret_dict.keys()), columns=['大盤年化報酬率(%)'])
 
 
 def indicator(data, name, timeperiod=None):

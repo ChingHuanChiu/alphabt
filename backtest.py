@@ -1,8 +1,9 @@
-import pandas as pd
 import statistic
-import util
+from strategy import Strategy
 from plot import get_plotly
 from broker import *
+
+from numba import jit
 
 
 class Bt:
@@ -13,17 +14,18 @@ class Bt:
         self.data = util.reset_data(self.data)
         self.Broker = Broker(self.Strategy.init_capital)
 
+    # @jit(nopython=True)
     def run(self):
-
         for i in range(1, len(self.data) - 1):
-            ohlc = self.data.values[i + 1, :]
+            ohlc = self.data.values[i + 1, :4]
 
             self.Strategy.signal(i)
             self.Broker.check_order(ohlc, date=self.data.index[i + 1], commission=self.com)
 
+        # clean the last position
         if self.Strategy.position != 0:
             self.Broker.liquidation(pos=self.Strategy.position, price=self.data.values[-1, :], date=self.data.index[-1]
-                                    ,commission=self.com)
+                                    , commission=self.com)
 
         record = self.Broker.get_log()
 
@@ -61,8 +63,6 @@ class Report:
     def yearly_performance(self):
         record_df = self.log.copy()
 
-        # record_df['return'] = record_df['報酬率(%)'] / 100
-
         out_put = pd.DataFrame()
         count = 0
         for y in record_df['SellDate'].dt.year.unique():
@@ -95,7 +95,14 @@ class Report:
 
         out_put['年化報酬率(%)'] = statistic.geo_yearly_ret(out_put)
         out_put['權益年化報酬率(%)'] = statistic.geo_yearly_ret(out_put, field='權益累積年度報酬(%)')
-        out_put['大盤年化報酬率(%)'] = statistic.index_geo_yearly_ret(self.df, out_put, index='^GSPC')
+        # if there are market index data
+        try:
+            market_yearly_return = statistic.index_geo_yearly_ret(self.df, index='^GSPC')
+
+            out_put = pd.concat([out_put, market_yearly_return], 1)
+        except Exception as e:
+            print(e)
+            pass
         util.print_result(sharpe=statistic.year_sharpe(out_put), calmar=statistic.calmar_ratio(out_put, record_df))
 
         return out_put

@@ -5,7 +5,7 @@ from accessor import order_execute
 def reset_data(dataframe: pd.DataFrame):
     dataframe.index = pd.to_datetime(dataframe.index)
     dataframe.columns = [c.lower() for c in dataframe.columns]
-    dataframe = dataframe[['open', 'high', 'low', 'close', 'volume']]
+    dataframe = dataframe[['open', 'high', 'low', 'close', 'volume', 'symbol']]
     return dataframe
 
 
