@@ -37,8 +37,12 @@ class Data(DataInterface):
 
 
 class CsvData(DataInterface):
+<<<<<<< HEAD
     def __init__(self):
         pass
+=======
+    pass
+>>>>>>> 94085d41b3a3d60e1fcb20b6da32d288975fd97e
 
 
 
