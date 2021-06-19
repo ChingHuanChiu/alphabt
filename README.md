@@ -57,4 +57,6 @@ Bt(TEMA).get_plot(subplot_technical_index=['MA'], overlap=['TEMA'], sub_plot_par
 
 - strategy simulation function
 - correct portfolio bt
+- CsvData class 
+- speed up with numba
 
