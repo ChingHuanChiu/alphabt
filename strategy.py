@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
-from broker import Broker, position
-import statistic
+from alphabt.broker import Broker, position
+from alphabt import statistic
 
 
 class Strategy(metaclass=ABCMeta):
@@ -29,19 +29,18 @@ class Strategy(metaclass=ABCMeta):
 
         return statistic.indicator(self.data, name, timeperiod)
 
-    @property
-    def position(self):
-        return position()
-
     def close_position(self):
         """
         close the position when current size of position is not zero
         """
         if position() != 0:
-            # print("in close", position_list[-1])
             Broker(self.init_capital).make_order(unit=-1 * position(), limit_price=None, stop_loss=None, stop_profit=None)
         else:
             pass
+
+    @property
+    def position(self):
+        return position()
 
     @property
     def empty_position(self):

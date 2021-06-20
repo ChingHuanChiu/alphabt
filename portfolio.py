@@ -1,7 +1,7 @@
-from strategy import Strategy
-from backtest import Bt
-from statistic import indicator, index_accumulate_return
-
+from alphabt.strategy import Strategy
+from alphabt.backtest import Bt
+from alphabt.statistic import indicator, index_accumulate_return
+from alphabt.data import Data
 
 import pandas as pd
 from typing import Callable, List
@@ -10,7 +10,6 @@ from pandas.tseries.offsets import BDay
 from pandas.tseries.holiday import USFederalHolidayCalendar
 from pandas.tseries.offsets import CustomBusinessDay
 
-from data import Data
 
 US_BUSINESS_DAY = CustomBusinessDay(calendar=USFederalHolidayCalendar())
 
@@ -43,7 +42,7 @@ class StrategyPort:
 
 class PortfolioBt:
     def __init__(self, start_date, end_date):
-        self.data = Data().data
+        self.data = Data().get()
         self.start_date = start_date
         self.end_date = end_date
 
@@ -51,20 +50,20 @@ class PortfolioBt:
 
         assert isinstance(hold_days, int), 'the type of hold_dates should be int.'
 
-        signal_dict = self._strategy_ticker_signal(strategy)  # {ticker: }
+        signal_dict = self._strategy_ticker_signal(strategy)  # {ticker: trading signal}
 
         ret_output = pd.Series()
         log_df = pd.DataFrame()
-
+        print('Start backtest ...')
         for sdate, edate in self._date_iter_periodicity(hold_days=hold_days):
             ret_df = pd.DataFrame()
-            selected_ticker_list = self._selected_ticker(signal_dict, sdate)[:3]
+            selected_ticker_list = self._selected_ticker(signal_dict, sdate)[:5]
             weight = [round(float(1 / len(selected_ticker_list)), 3)] * len(selected_ticker_list)
 
             for s, w in zip(selected_ticker_list, weight):
                 sdata = self.data[self.data.symbol == s]
 
-                # 配合alpha，訊號出現隔天才交易，所以要將買賣訊號的日期往前一天
+                # 配合alphabt，訊號出現隔天才交易，所以要將買賣訊號的日期往前一天
                 print(s, sdate, edate, '---------------', sdate - BDay(1))
                 log = buy_and_hold(sdata, sdate - 1 * US_BUSINESS_DAY, edate - 1 * US_BUSINESS_DAY)[0]
 
@@ -86,8 +85,9 @@ class PortfolioBt:
                 self.portfolio_log(log_df)
 
     def _strategy_ticker_signal(self, strategy):
-        d = {ticker: df for ticker, df in self.data.groupby('symbol')}
-        signal_dict = {ticker: strategy(sub_data) for ticker, sub_data in d.items()}
+        d = {ticker: df for ticker, df in self.data.groupby('symbol') if ticker not in \
+             ['^IXIC', '^GSPC', '^DJI']}
+        signal_dict = {ticker: strategy(sub_data) for ticker, sub_data in d.items() if not sub_data.empty}
         return signal_dict
 
     def _selected_ticker(self, signal_dict, sdate):
@@ -150,8 +150,8 @@ def buy_and_hold(data, start_date, end_date):
             if (self.data.index[ind] == end_date) & self.long_position:
                 self.sell()
 
-    log, per = Bt(Port).run()
-    return log, per
+    log_df, per = Bt(Port).run(print_sharpe=False)
+    return log_df, per
 
 
 if __name__ == '__main__':

@@ -1,12 +1,12 @@
 import pandas as pd
-from accessor import order_execute
+from alphabt.accessor import order_execute
 
 
-def reset_data(dataframe: pd.DataFrame):
-    dataframe.index = pd.to_datetime(dataframe.index)
-    dataframe.columns = [c.lower() for c in dataframe.columns]
-    dataframe = dataframe[['open', 'high', 'low', 'close', 'volume', 'symbol']]
-    return dataframe
+def reset_data(data_frame: pd.DataFrame):
+    data_frame.index = pd.to_datetime(data_frame.index)
+    data_frame.columns = [c.lower() for c in data_frame.columns]
+    data_frame = data_frame[['open', 'high', 'low', 'close', 'volume', 'symbol']]
+    return data_frame
 
 
 def adjust_price(trade, commission):
@@ -27,7 +27,7 @@ def print_result(sharpe, calmar):
     print('-----------------------------|')
     print('sharpe ratio', '|', sharpe, '--------|')
     print('-----------------------------|')
-    print('calarm ratio', '|', calmar, '--------|')
+    print('calmar ratio', '|', calmar, '--------|')
     print('-----------------------------|')
 
 

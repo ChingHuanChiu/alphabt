@@ -1,10 +1,7 @@
 import statistic
-from strategy import Strategy
 from plot import get_plotly
 from broker import *
-
-from numba import jit
-
+from alphabt import util
 
 class Bt:
     def __init__(self, strategy, commission=None):
@@ -14,11 +11,9 @@ class Bt:
         self.data = util.reset_data(self.data)
         self.Broker = Broker(self.Strategy.init_capital)
 
-    # @jit(nopython=True)
-    def run(self):
+    def run(self, benchmark='^GSPC', print_sharpe=True):
         for i in range(1, len(self.data) - 1):
             ohlc = self.data.values[i + 1, :4]
-
             self.Strategy.signal(i)
             self.Broker.check_order(ohlc, date=self.data.index[i + 1], commission=self.com)
 
@@ -29,7 +24,7 @@ class Bt:
 
         record = self.Broker.get_log()
 
-        report, performance = Report(self.data, record, self.Strategy.init_capital).result()
+        report, performance = Report(self.data, record, self.Strategy.init_capital, print_sharpe).result(benchmark)
 
         return report, performance
 
@@ -40,10 +35,11 @@ class Bt:
 
 
 class Report:
-    def __init__(self, df, log_df, init_capital):
+    def __init__(self, df, log_df, init_capital, print_sharpe: bool):
         self.df = df
         self.log = log_df
         self.init_cap = init_capital
+        self.print = print_sharpe
 
     def report(self):
         trading_df = self.log
@@ -60,7 +56,7 @@ class Report:
         trading_df['EquityAccumulateReturn'] = round((((trading_df['EquityReturn'] * 0.01) + 1).cumprod() - 1) * 100, 3)
         return trading_df
 
-    def yearly_performance(self):
+    def yearly_performance(self, benchmark):
         record_df = self.log.copy()
 
         out_put = pd.DataFrame()
@@ -77,9 +73,7 @@ class Report:
             performance_df['勝率(%)'] = statistic.win_rate(record_df_year)
             performance_df['獲利因子'] = statistic.profit_factor(record_df_year)
             performance_df['最大損失(元)'] = statistic.max_loss(record_df_year)
-            # performance_df['個股年度最大損失(元)'] = statistic.stock_max_loss(self.df, y)
             performance_df['最大獲利(元)'] = statistic.max_profit(record_df_year)
-            # performance_df['個股年度最大獲利(元)'] = statistic.stock_max_profit(self.df, y)
             performance_df['個股年度報酬(%)'] = statistic.stock_year_return(self.df, y)
             performance_df['當年度報酬率(%)'] = statistic.year_return(record_df_year, field='報酬率(%)')
             performance_df['平均交易報酬率(%)'] = statistic.average_trade_return(performance_df)
@@ -97,18 +91,19 @@ class Report:
         out_put['權益年化報酬率(%)'] = statistic.geo_yearly_ret(out_put, field='權益累積年度報酬(%)')
         # if there are market index data
         try:
-            market_yearly_return = statistic.index_geo_yearly_ret(self.df, index='^GSPC')
+            market_yearly_return = statistic.index_geo_yearly_ret(self.df, index=benchmark)
 
             out_put = pd.concat([out_put, market_yearly_return], 1)
-        except Exception as e:
-            print(e)
-            pass
-        util.print_result(sharpe=statistic.year_sharpe(out_put), calmar=statistic.calmar_ratio(out_put, record_df))
+        except:
+            print(f'There is no {benchmark} data ')
+
+        if self.print:
+            util.print_result(sharpe=statistic.year_sharpe(out_put), calmar=statistic.calmar_ratio(out_put, record_df))
 
         return out_put
 
-    def result(self):
-        return self.report(), self.yearly_performance()
+    def result(self, benchmark):
+        return self.report(), self.yearly_performance(benchmark)
 
 
 

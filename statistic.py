@@ -3,7 +3,7 @@ sys.path.append('./')
 import numpy as np
 import pandas as pd
 from talib import abstract
-from data import Data
+from alphabt.data import Data
 
 
 def annual_profit(record_df_year):
@@ -179,14 +179,21 @@ def index_geo_yearly_ret(df, index='^GSPC'):
                         index=list(geo_ret_dict.keys()), columns=['大盤年化報酬率(%)'])
 
 
-def indicator(data, name, timeperiod=None):
-    data.columns = [i.lower() for i in data.columns]
-    O = data.loc[:, 'open'].astype('float')
-    H = data.loc[:, 'high'].astype('float')
-    L = data.loc[:, 'low'].astype('float')
-    C = data.loc[:, 'close'].astype('float')
-    V = data.loc[:, 'volume'].astype('float')
-    OHLCV = {'open': O, 'high': H, 'low': L, 'close': C, 'volume': V}
+def indicator(data, name: str, timeperiod: int = None):
+    """
+
+    :param data: stock data with "close", "open", "high", "low", "volume"
+    :param name: function name of TA-Lib package
+    :param timeperiod: parameter of TA-Lib method
+    :return:
+    """
+
+    OHLCV = {'open':   data['open'],
+             'high':   data['high'],
+             'low':    data['low'],
+             'close':  data['close'],
+             'volume': data['volume']
+             }
 
     ret = pd.DataFrame(index=data.index)
     if timeperiod is not None:
@@ -219,3 +226,4 @@ def indicator(data, name, timeperiod=None):
 
         ret = pd.concat([ret, s_df], axis=1)
     return ret
+

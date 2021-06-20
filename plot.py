@@ -49,7 +49,7 @@ def _update_layout(fig):
         template="plotly_dark",
         xaxis_rangeslider_visible=False,
         xaxis=dict(type='category'),
-        height=1200, width=1200)
+        height=800, width=1000)
 
 
 def _subplot_indicator(subplot_technical_index, sub_plot_param, data, fig, row):
