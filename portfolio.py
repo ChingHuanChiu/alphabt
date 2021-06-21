@@ -55,9 +55,10 @@ class PortfolioBt:
         ret_output = pd.Series()
         log_df = pd.DataFrame()
         print('Start backtest ...')
+        print(f'there are {len(signal_dict)} stocks ')
         for sdate, edate in self._date_iter_periodicity(hold_days=hold_days):
             ret_df = pd.DataFrame()
-            selected_ticker_list = self._selected_ticker(signal_dict, sdate)[:5]
+            selected_ticker_list = self._selected_ticker(signal_dict, sdate)
             weight = [round(float(1 / len(selected_ticker_list)), 3)] * len(selected_ticker_list)
 
             for s, w in zip(selected_ticker_list, weight):
@@ -145,7 +146,7 @@ def buy_and_hold(data, start_date, end_date):
 
         def signal(self, ind):
             if (self.data.index[ind] == start_date) & self.empty_position:
-                self.buy(unit=1)
+                self.buy()
 
             if (self.data.index[ind] == end_date) & self.long_position:
                 self.sell()
@@ -154,11 +155,3 @@ def buy_and_hold(data, start_date, end_date):
     return log_df, per
 
 
-if __name__ == '__main__':
-    def strategy(df):
-        kd = indicator(df, 'STOCH')
-        condition = (kd['slowk'] > kd['slowd']) & (kd['slowk'].shift() < kd['slowd'].shift())
-        return condition
-
-
-    log, pot_log = PortfolioBt(start_date='2010-01-10', end_date='2011-01-01').run(hold_days=120, strategy=strategy)

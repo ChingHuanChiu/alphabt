@@ -1,8 +1,8 @@
-import sys
-sys.path.append('./')
 import numpy as np
 import pandas as pd
 from talib import abstract
+from typing import List
+
 from alphabt.data import Data
 
 
@@ -179,7 +179,7 @@ def index_geo_yearly_ret(df, index='^GSPC'):
                         index=list(geo_ret_dict.keys()), columns=['大盤年化報酬率(%)'])
 
 
-def indicator(data, name: str, timeperiod: int = None):
+def indicator(data, name: str, timeperiod: List[int] = None):
     """
 
     :param data: stock data with "close", "open", "high", "low", "volume"
@@ -196,10 +196,12 @@ def indicator(data, name: str, timeperiod: int = None):
              }
 
     ret = pd.DataFrame(index=data.index)
+    f = getattr(abstract, name)
+    output_names = f.output_names
+
     if timeperiod is not None:
         for t in timeperiod:
-            f = getattr(abstract, name)
-            output_names = f.output_names
+
             s = f(OHLCV, timeperiod=t)
             s = pd.to_numeric(s, errors='coerce')
 
@@ -213,8 +215,7 @@ def indicator(data, name: str, timeperiod: int = None):
                 s_df = pd.DataFrame(s, index=data.index, columns=output_names_col)  # 當output_names>1時，s為list
             ret = pd.concat([ret, s_df], axis=1)
     else:
-        f = getattr(abstract, name)
-        output_names = f.output_names
+
         s = f(OHLCV)
         s = pd.to_numeric(s, errors='coerce')
         if len(output_names) == 1:
@@ -226,4 +227,7 @@ def indicator(data, name: str, timeperiod: int = None):
 
         ret = pd.concat([ret, s_df], axis=1)
     return ret
+
+
+
 

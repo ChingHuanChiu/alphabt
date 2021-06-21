@@ -3,6 +3,7 @@ from plot import get_plotly
 from broker import *
 from alphabt import util
 
+
 class Bt:
     def __init__(self, strategy, commission=None):
         self.com = commission
@@ -12,10 +13,12 @@ class Bt:
         self.Broker = Broker(self.Strategy.init_capital)
 
     def run(self, benchmark='^GSPC', print_sharpe=True):
-        for i in range(1, len(self.data) - 1):
-            ohlc = self.data.values[i + 1, :4]
-            self.Strategy.signal(i)
-            self.Broker.check_order(ohlc, date=self.data.index[i + 1], commission=self.com)
+        # for i in range(1, len(self.data) - 1):
+        #     ohlc = self.data.values[i + 1, :4]
+        #     self.Strategy.signal(i)
+        #     self.Broker.check_order(ohlc, date=self.data.index[i + 1], commission=self.com)
+
+        util.back_test_loop(len(self.data), self.data.values, self.data.index, self.Strategy, self.Broker, self.com)
 
         # clean the last position
         if self.Strategy.position != 0:
@@ -32,6 +35,9 @@ class Bt:
                  log=None, callback=None):
         get_plotly(self.data, subplot_technical_index, overlap=overlap, sub_plot_param=sub_plot_param
                    , overlap_param=overlap_param, log=log, callback=callback)
+
+
+
 
 
 class Report:
