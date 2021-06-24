@@ -1,5 +1,4 @@
 import pandas as pd
-from numba import jit
 
 from alphabt.accessor import order_execute
 
@@ -61,9 +60,3 @@ def touch_stop_profit(order, price, date):
         return con
 
 
-@jit
-def back_test_loop(data_length, data_values, data_index, strategy_class, broker_class, com):
-    for i in range(1, data_length - 1):
-        ohlc = data_values[i + 1, :4]
-        strategy_class.signal(i)
-        broker_class.check_order(ohlc, date=data_index[i + 1], commission=com)

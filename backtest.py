@@ -2,12 +2,18 @@ import statistic
 from plot import get_plotly
 from broker import *
 from alphabt import util
+from alphabt.strategy import Strategy
+
+from numba import jit
 
 
 class Bt:
     def __init__(self, strategy, commission=None):
         self.com = commission
-        self.Strategy = strategy()
+        if isinstance(strategy, Strategy):
+            self.Strategy = strategy
+        else:
+            self.Strategy = strategy()
         self.data = self.Strategy.data
         self.data = util.reset_data(self.data)
         self.Broker = Broker(self.Strategy.init_capital)
@@ -18,7 +24,7 @@ class Bt:
         #     self.Strategy.signal(i)
         #     self.Broker.check_order(ohlc, date=self.data.index[i + 1], commission=self.com)
 
-        util.back_test_loop(len(self.data), self.data.values, self.data.index, self.Strategy, self.Broker, self.com)
+        self._back_test_loop(len(self.data), self.data.values, self.data.index, self.Strategy, self.Broker, self.com)
 
         # clean the last position
         if self.Strategy.position != 0:
@@ -35,6 +41,13 @@ class Bt:
                  log=None, callback=None):
         get_plotly(self.data, subplot_technical_index, overlap=overlap, sub_plot_param=sub_plot_param
                    , overlap_param=overlap_param, log=log, callback=callback)
+        
+    @jit
+    def _back_test_loop(self, data_length, data_values, data_index, strategy_class, broker_class, com):
+        for i in range(1, data_length - 1):
+            ohlc = data_values[i + 1, :4]
+            strategy_class.signal(i)
+            broker_class.check_order(ohlc, date=data_index[i + 1], commission=com)
 
 
 
