@@ -48,14 +48,19 @@ class PortfolioBt:
     def run(self):
         ticker_log_list = []
         for ticker in self.multi_stock_data.symbol.unique():
-            sub_data = self.multi_stock_data[self.multi_stock_data.symbol.isin([ticker])]
+            try:
+                sub_data = self.multi_stock_data[self.multi_stock_data.symbol.isin([ticker])]
 
-            ticker_log = Bt(strategy=self.strategy(data=sub_data)).run()[0]
-            ticker_log['symbol'] = [ticker] * len(ticker_log)
-            ticker_log_list.append(ticker_log)
+                ticker_log = Bt(strategy=self.strategy(data=sub_data)).run(print_sharpe=False)[0]
+                ticker_log['symbol'] = [ticker] * len(ticker_log)
+                ticker_log_list.append(ticker_log)
+            except Exception as e:
+                print(e)
+                continue
         log_res = pd.concat(ticker_log_list, 0)
-        log_res = log_res.sort_values(by='BuyDate')
+#         log_res = log_res.sort_values(by='BuyDate')
         log_res = log_res[['BuyDate', 'BuyPrice', 'SellDate', 'SellPrice', 'KeepDay', '報酬率(%)', 'symbol']]
+        log_res = log_res.sort_values(by=['symbol', 'SellDate']).reset_index(drop=True).set_index(['symbol', log_res.index])
         return log_res
 
 
