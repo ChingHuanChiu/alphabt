@@ -5,6 +5,7 @@ from alphabt import util
 from alphabt.strategy import Strategy
 
 from numba import jit
+import pandas as pd
 
 
 class Bt:
@@ -19,10 +20,6 @@ class Bt:
         self.Broker = Broker(self.Strategy.init_capital)
 
     def run(self, benchmark='^GSPC', print_sharpe=True):
-        # for i in range(1, len(self.data) - 1):
-        #     ohlc = self.data.values[i + 1, :4]
-        #     self.Strategy.signal(i)
-        #     self.Broker.check_order(ohlc, date=self.data.index[i + 1], commission=self.com)
 
         self._back_test_loop(len(self.data), self.data.values, self.data.index, self.Strategy, self.Broker, self.com)
 
@@ -48,9 +45,6 @@ class Bt:
             ohlc = data_values[i + 1, :4]
             strategy_class.signal(i)
             broker_class.check_order(ohlc, date=data_index[i + 1], commission=com)
-
-
-
 
 
 class Report:
