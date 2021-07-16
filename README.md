@@ -24,14 +24,15 @@ class TEMA(Strategy):
     the ratio of equity to buy stock , respectively
 		"""
     def __init__(self):
-        self.data = Data().symbol_data(symbol=['AMD'])
+        # input your data
+        self.data = data
         self.init_capital = 100000
         self.tema = self.indicator('TEMA', [8, 13, 21, 34, 55])
 
     def signal(self, index):
 
         if (self.tema['8TEMA'][index] > self.tema['13TEMA'][index]) & (self.empty_position):
-            self.buy(unit=0.99)
+            self.buy()
         if (self.tema['13TEMA'][index] > self.tema['8TEMA'][index]) & (self.long_position):
             self.sell()
 
@@ -57,7 +58,8 @@ Bt(TEMA).get_plot(subplot_technical_index=['MA'], overlap=['TEMA'], sub_plot_par
 ```python
 class CCI(Strategy):
     def __init__(self):
-        self.data = Data().symbol_data(symbol=['AMD'])
+        # input your data
+        self.data = data
         self.init_capital = 10000
         self.cci = self.indicator('CCI')
 
