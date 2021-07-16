@@ -1,4 +1,4 @@
-# alphabt - Beta
+# alphabt
 
 # Overview
 
@@ -11,7 +11,7 @@ Back test the strategy on stocks  and buy(sell) at next open when the signal app
 
 # Usage
 
-- Strategy:
+- Strategy (Only for long direction):
 
     Buy :  8TEMA > 13TEMA
 
@@ -53,9 +53,29 @@ Bt(TEMA).get_plot(subplot_technical_index=['MA'], overlap=['TEMA'], sub_plot_par
 
     ![newplot](https://user-images.githubusercontent.com/51486531/109655384-2d4cf700-7b9e-11eb-8f0e-6e71a47efe13.png)
 
-# Future Work
+- Strategy (both long and short direction)
+```python
+class CCI(Strategy):
+    def __init__(self):
+        self.data = Data().symbol_data(symbol=['AMD'])
+        self.init_capital = 10000
+        self.cci = self.indicator('CCI')
 
-- strategy simulation function
-- correct portfolio bt
+    def signal(self, index):
+
+        if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100) & (not self.long_position):
+            #先將做空部位買回，再做多
+            if self.short_position:
+                self.close_position()
+            self.buy(unit=1, stop_loss=0.1, stop_profit=0.1)
+        if (self.cci['CCI'][index] < 100) & (self.cci['CCI'][index - 1] > 100) & (not self.short_position):
+            # 先賣出多頭部位，再做空
+            if self.long_position:
+                self.close_position()
+            self.sell(unit=-1)   
+
+
+# Future Work
+- strategy simulation 
 - CsvData class 
 
