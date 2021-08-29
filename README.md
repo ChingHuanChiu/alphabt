@@ -2,12 +2,13 @@
 
 # Overview
 
-Back test the strategy on stocks  and buy(sell) at next open when the signal appears，the following features:
+Backtest the trading strategy on stocks and buy(sell) at next open when the signal appears，the following features:
 
 - stop loss
 - stop profit
 - position overweight
 - TaLib feature
+
 
 # Usage
 
@@ -24,15 +25,18 @@ class TEMA(Strategy):
     the ratio of equity to buy stock , respectively
 		"""
     def __init__(self):
-        # input your data
+        # setting your data
         self.data = data
+        # setting initial capital
         self.init_capital = 100000
+        # use the TaLib feature
         self.tema = self.indicator('TEMA', [8, 13, 21, 34, 55])
 
     def signal(self, index):
-
+        # Only buy the stock with empty position
         if (self.tema['8TEMA'][index] > self.tema['13TEMA'][index]) & (self.empty_position):
             self.buy()
+        # Only sell with long position
         if (self.tema['13TEMA'][index] > self.tema['8TEMA'][index]) & (self.long_position):
             self.sell()
 
@@ -75,9 +79,5 @@ class CCI(Strategy):
             if self.long_position:
                 self.close_position()
             self.sell(unit=-1)   
-
-
-# Future Work
-- strategy simulation 
-- CsvData class 
+```
 
