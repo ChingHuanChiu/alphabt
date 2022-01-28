@@ -1,16 +1,19 @@
+from typing import Union
+
 import pandas as pd
 
-from alphabt.accessor import order_execute
+from alphabt.accessor import Accessor
+from alphabt.order import Order 
 
 
-def reset_data(data_frame: pd.DataFrame):
+def reset_data(data_frame: pd.DataFrame) -> pd.DataFrame:
     data_frame.index = pd.to_datetime(data_frame.index)
     data_frame.columns = [c.lower() for c in data_frame.columns]
     data_frame = data_frame[['open', 'high', 'low', 'close', 'volume', 'symbol']]
     return data_frame
 
 
-def adjust_price(trade, commission):
+def adjust_price(trade: Order, commission: Union[None, float]) -> float:
     price = trade.trading_price
     if commission is not None:
         assert 0 < commission < 1, 'commision must in (0, 1)'
@@ -24,7 +27,7 @@ def adjust_price(trade, commission):
         return price
 
 
-def print_result(sharpe, calmar):
+def print_result(sharpe, calmar) -> None:
     print('-----------------------------|')
     print('sharpe ratio', '|', sharpe, '--------|')
     print('-----------------------------|')
@@ -32,30 +35,32 @@ def print_result(sharpe, calmar):
     print('-----------------------------|')
 
 
-def touch_stop_loss(order, price, date):
+
+accessor = Accessor()
+def touch_stop_loss(order: Order, price: float, date:pd.Timestamp) -> bool:
 
     if order.is_long:
         con = order.stop_loss and price <= order.stop_loss_prices and order.is_filled and date not in [
-            order.trading_date for order in order_execute]
+            order.trading_date for order in accessor._order_execute]
 
         return con
     else:
         con = order.stop_loss and price >= order.stop_loss_prices and order.is_filled and date not in [
-            order.trading_date for order in order_execute]
+            order.trading_date for order in accessor._order_execute]
 
         return con
 
 
-def touch_stop_profit(order, price, date):
+def touch_stop_profit(order: Order, price: float, date:pd.Timestamp) -> bool:
 
     if order.is_long:
         con = order.stop_profit and price >= order.stop_profit_prices and order.is_filled and date not in [
-            order.trading_date for order in order_execute]
+            order.trading_date for order in accessor._order_execute]
 
         return con
     else:
         con = order.stop_profit and price <= order.stop_profit_prices and order.is_filled and date not in [
-            order.trading_date for order in order_execute]
+            order.trading_date for order in accessor._order_execute]
 
         return con
 

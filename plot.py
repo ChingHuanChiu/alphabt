@@ -12,9 +12,9 @@ from plotly.subplots import make_subplots
 
 
 def add_trace(fig, tech_df, row):
-    '''
-    畫技術指標
-    '''
+    """畫技術指標
+    """
+    
     for col in tech_df.columns:
         fig.add_trace(go.Scatter(x=tech_df.index, y=tech_df[col],
                                  mode='lines',

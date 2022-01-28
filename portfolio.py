@@ -1,7 +1,6 @@
 from alphabt.strategy import Strategy
 from alphabt.backtest import Bt
 from alphabt.statistic import indicator, index_accumulate_return
-from alphabt.accessor import *
 
 
 import pandas as pd

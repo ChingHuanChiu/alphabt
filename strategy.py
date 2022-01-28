@@ -5,11 +5,12 @@ from alphabt import statistic
 
 class Strategy(metaclass=ABCMeta):
 
+
     @abstractmethod
     def signal(self, index):
+        """the main strategy logic
         """
-        the main strategy logic
-        """
+        ...
 
     def buy(self, unit=None, limit_price=None, stop_loss=None, stop_profit=None):
         if unit is None:
@@ -17,6 +18,7 @@ class Strategy(metaclass=ABCMeta):
         assert unit > 0, f'in buy action, unit must be positive but {unit}'
         Broker(self.init_capital).make_order(unit=unit, limit_price=limit_price, stop_loss=stop_loss,
                                              stop_profit=stop_profit)
+
 
     def sell(self, unit=None, limit_price=None, stop_loss=None, stop_profit=None):
         if unit is None:
@@ -30,13 +32,11 @@ class Strategy(metaclass=ABCMeta):
         return statistic.indicator(self.data, name, timeperiod)
 
     def close_position(self):
-        """
-        close the position when current size of position is not zero
+        """close the position when current size of position is not zero
         """
         if position() != 0:
             Broker(self.init_capital).make_order(unit=-1 * position(), limit_price=None, stop_loss=None, stop_profit=None)
-        else:
-            pass
+       
 
     @property
     def position(self):

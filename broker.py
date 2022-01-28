@@ -1,4 +1,8 @@
-from alphabt.accessor import *
+from typing import Union, List
+from functools import partial
+
+
+from alphabt.accessor import Accessor
 from alphabt.order import Order
 from copy import deepcopy
 import pandas as pd
@@ -7,23 +11,25 @@ from alphabt import util
 
 
 class Broker:
-    def __init__(self, equity):
+    def __init__(self, equity:float) -> None:
 
-        self.execute = Execute(equity)  # Execute
+        self.execute: Execute = Execute(equity)
+        self.accessor: Accessor = Accessor()  
 
-    def make_order(self, unit, limit_price, stop_loss, stop_profit):
+    def make_order(self, unit: Union[float, int], limit_price: float, 
+                stop_loss: float, stop_profit: float) -> None:
 
-        order_queue.append(Order(unit, limit_price, stop_loss, stop_profit))
+        self.accessor._order_queue.append(Order(unit, limit_price, stop_loss, stop_profit))
 
-    def check_order(self, ohlc, date, commission):
-        """
-        check the order and set the information to order by different condition
+
+    def check_order(self, ohlc: np.array, date: pd.Timestamp, commission: Union[None, float]) -> None:
+        """check the order and set the information to order by different condition
         """
 
         op = ohlc[0]
 
-        for o in order_queue:
-            if position() != 0 and position() + o.units != 0 and len(order_queue) == 1:
+        for o in self.accessor._order_queue:
+            if position() != 0 and position() + o.units != 0 and len(self.accessor._order_queue) == 1:
                 o.is_parents = False
 
             if o.limit_price:
@@ -50,7 +56,7 @@ class Broker:
                     setattr(o, 'stop_profit_prices', stop_profit_price)
 
                 if not o.is_parents:
-                    add_position_long_order.append(o)
+                    self.accessor._add_position_long_order.append(o)
 
             elif o.is_short:
 
@@ -69,51 +75,61 @@ class Broker:
                     setattr(o, 'stop_profit_prices', stop_profit_price)
 
                 if not o.is_parents:
-                    add_position_short_order.append(o)
+                    self.accessor._add_position_short_order.append(o)
 
-            order_execute.append(o)
-            self.work(commission=commission)
+            self.accessor._order_execute.append(o)
+            self._work(commission=commission)
 
-        order_queue.clear()
+        self.accessor._order_queue.clear()
 
         self.check_if_sl_or_sp(ohlc=ohlc, date=date, commission=commission)
 
-    def check_if_sl_or_sp(self, ohlc, date, commission):
-        for t in order_execute:
-            origin_o = deepcopy(t).is_parents
+
+    def check_if_sl_or_sp(self, ohlc: np.array, date: pd.Timestamp, commission: Union[None, float]) -> None:
+        
+        for t in self.accessor._order_execute:
+
+            partial_method = partial(t.replace, _unit=-t.units, trading_date=date, _is_fill=False,
+                          _is_parent=False, stop_loss=None)
+
+            parent_order = deepcopy(t).is_parents
+
             if util.touch_stop_loss(order=t, price=ohlc[3], date=date):
 
-                t.replace(_unit=-t.units, _trading_price=t.stop_loss_prices, trading_date=date, _is_fill=False,
-                          _is_parent=False, stop_loss=None)
+                partial_method(_trading_price=t.stop_loss_prices)
 
             elif util.touch_stop_profit(order=t, price=ohlc[3], date=date):
-                t.replace(_unit=-t.units, _trading_price=t.stop_profit_prices, trading_date=date, _is_fill=False,
-                          _is_parent=False, stop_loss=None)
 
-            if not origin_o:
-                order_execute.remove(t)
+                partial_method(_trading_price=t.stop_profit_prices)
 
-        self.work(commission=commission)
+            # _order_execute only with the parent orders
+            if not parent_order:
+                self.accessor._order_execute.remove(t)
 
-    def work(self, commission):
+        self._work(commission=commission)
+
+
+    def _work(self, commission):
 
         self.execute.trading(commission)
 
+
     def liquidation(self, pos, price, date, commission):
-        """
-        clean the last position
+        """clean the last position
         """
         o = Order(-1 * pos, limit_price=None, stop_loss=None, stop_profit=None, is_fill=False)
         setattr(o, 'trading_price', price[0])
         setattr(o, 'trading_date', date)
-        order_execute.append(o)
+        self.accessor._order_execute.append(o)
 
-        self.work(commission=commission)
+        self._work(commission=commission)
+
 
     def get_log(self):
-        log_dict = {'BuyDate': buy_date, 'BuyPrice': buy_price, 'BuyUnits': buy_unit, 'CashPaying': amnt_paying,
-                    'SellDate': sell_date, 'SellPrice': sell_price, 'SellUnits': sell_unit,
-                    'CashReceiving': amnt_receiving}
+
+        log_dict = {'BuyDate': self.accessor._buy_date, 'BuyPrice': self.accessor._buy_price, 'BuyUnits': self.accessor._buy_unit, 'CashPaying': self.accessor._amnt_paying,
+                    'SellDate': self.accessor._sell_date, 'SellPrice': self.accessor._sell_price, 'SellUnits': self.accessor._sell_unit,
+                    'CashReceiving': self.accessor._amnt_receiving}
 
         log = pd.DataFrame(log_dict)
 
@@ -124,50 +140,54 @@ class Broker:
 
 
 class Execute:
-    def __init__(self, equity):
-        self.__equity = equity
+    def __init__(self, equity:float):
+        self._equity = equity
+        self.accessor: Accessor = Accessor() 
 
-    def trading(self, commission):
+    def trading(self, commission: Union[None, float]):
 
-        for t in order_execute:
+        for t in self.accessor._order_execute:
+
             if not t.is_filled:
-                position_list.append(t.units)
+                self.accessor._position_list.append(t.units)
 
-                if t.is_short and add_position_long_order and t.is_parents:
-                    self.split_add_pos_order(t, add_position_long_order, commission)
-                elif t.is_long and add_position_short_order and t.is_parents:
-                    self.split_add_pos_order(t, add_position_short_order, commission)
+                if t.is_short and self.accessor._add_position_long_order and t.is_parents:
+                    self.split_add_pos_order(t, self.accessor._add_position_long_order, commission)
+
+                elif t.is_long and self.accessor._add_position_short_order and t.is_parents:
+                    self.split_add_pos_order(t, self.accessor._add_position_short_order, commission)
 
                 else:
                     self.fill(t, commission)
 
-            if position() == 0 and t in order_execute: del order_execute[: order_execute.index(t) + 1]
+            if position() == 0 and t in self.accessor._order_execute: del self.accessor._order_execute[: self.accessor._order_execute.index(t) + 1]
 
-    def fill(self, t, commission):
+
+    def fill(self, t: Order, commission: Union[None, float]):
         adj_price = util.adjust_price(trade=t, commission=commission)
 
         if t.is_long:
-            assert self.__equity >= adj_price * t.units, 'Your money is empty'
+            assert self._equity >= adj_price * t.units, 'Your money is empty'
 
-            buy_price.append(t.trading_price)
-            buy_date.append(t.trading_date)
-            buy_unit.append(t.units)
-            amnt_paying.append(adj_price * t.units)
+            self.accessor._buy_price.append(t.trading_price)
+            self.accessor._buy_date.append(t.trading_date)
+            self.accessor._buy_unit.append(t.units)
+            self.accessor._amnt_paying.append(adj_price * t.units)
 
-            self.__equity -= t.units * adj_price
+            self._equity -= t.units * adj_price
             setattr(t, 'is_filled', True)
 
         elif t.is_short:
 
-            sell_price.append(t.trading_price)
-            sell_date.append(t.trading_date)
-            sell_unit.append(t.units)
-            amnt_receiving.append(abs(t.units) * adj_price)
+            self.accessor._sell_price.append(t.trading_price)
+            self.accessor._sell_date.append(t.trading_date)
+            self.accessor._sell_unit.append(t.units)
+            self.accessor._amnt_receiving.append(abs(t.units) * adj_price)
 
-            self.__equity += abs(t.units) * adj_price
+            self._equity += abs(t.units) * adj_price
             setattr(t, 'is_filled', True)
 
-    def split_add_pos_order(self, trade_order, add_position_order: list, commission):
+    def split_add_pos_order(self, trade_order: Order, add_position_order: List[Order], commission: Union[None, float]):
         """
         split the order which include overweight order into a list of single order and fill them
         e.g. a sell order [with 6 units has an parent order and an overweight order] becomes
@@ -177,9 +197,11 @@ class Execute:
         origin_trader_order_sign = np.sign(trade_order.units)
         if trade_order.is_short:
             parents_unit = trade_order.units + sum(abs(_o.units) for _o in add_position_order)
+
         else:
             parents_unit = trade_order.units - sum(abs(_o.units) for _o in add_position_order)
         trade_order.units = parents_unit
+
         if trade_order.units != 0:
             temp_order_list.append(trade_order)
         for _t in add_position_order:
@@ -201,8 +223,7 @@ class Execute:
 
     @property
     def equity(self):
-        return self.__equity
-
+        return self._equity
 
 def position():
-    return sum(size for size in position_list)
+    return sum(size for size in Accessor()._position_list)

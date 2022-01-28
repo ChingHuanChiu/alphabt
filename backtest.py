@@ -1,11 +1,12 @@
-import statistic
+from numba import jit
+import pandas as pd
+
 from plot import get_plotly
 from broker import *
 from alphabt import util
 from alphabt.strategy import Strategy
+import statistic
 
-from numba import jit
-import pandas as pd
 
 
 class Bt:
@@ -15,9 +16,12 @@ class Bt:
             self.Strategy = strategy
         else:
             self.Strategy = strategy()
-        self.data = self.Strategy.data
-        self.data = util.reset_data(self.data)
+
+        self.data = util.reset_data(self.Strategy.data)
+            
         self.Broker = Broker(self.Strategy.init_capital)
+
+
 
     def run(self, benchmark='^GSPC', print_sharpe=True):
 
@@ -40,7 +44,9 @@ class Bt:
                    , overlap_param=overlap_param, log=log, callback=callback)
         
     @jit
-    def _back_test_loop(self, data_length, data_values, data_index, strategy_class, broker_class, com):
+    def _back_test_loop(self, data_length, data_values: np.array, data_index: pd.Timestamp, 
+                    strategy_class: Strategy, broker_class: Broker, com: Union[None, float]) -> None:
+        
         for i in range(1, data_length - 1):
             ohlc = data_values[i + 1, :4]
             strategy_class.signal(i)
