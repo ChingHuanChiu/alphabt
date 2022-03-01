@@ -99,8 +99,11 @@ def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param
         sell = pd.Series(log['SellPrice'].values, index=log['SellDate']).drop_duplicates().rename('SellPrice')
         _log = pd.concat([buy, sell, _log], 1)
         try:
-            index_return = statistic.index_accumulate_return(str(log['BuyDate'][0].year), str(log['BuyDate'].iloc[-1].year),
-                                                             index='^GSPC')
+            
+            index_start_year = min(log['BuyDate'][0].year, log['SellDate'][0].year)
+            index_end_year = max(log['BuyDate'].iloc[-1].year, log['SellDate'].iloc[-1].year)
+
+            index_return = statistic.index_accumulate_return(index_start_year, index_end_year, index='^GSPC')
         except:
             index_return = [0] * len(log)
 
