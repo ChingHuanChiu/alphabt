@@ -36,7 +36,7 @@ def print_result(sharpe, calmar) -> None:
 
 
 
-accessor = Accessor()
+accessor = Accessor
 def touch_stop_loss(order: Order, price: float, date:pd.Timestamp) -> bool:
 
     if order.is_long:

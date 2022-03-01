@@ -1,16 +1,20 @@
-from numba import jit
 import pandas as pd
+
+from numba import jit
 
 from plot import get_plotly
 from broker import *
 from alphabt import util
-from alphabt.strategy import Strategy
+from alphabt.strategy import Strategy, Equity
+from alphabt.accessor import Accessor
 import statistic
 
-
+import time 
 
 class Bt:
     def __init__(self, strategy, commission=None):
+
+        Accessor.initial()
         self.com = commission
         if isinstance(strategy, Strategy):
             self.Strategy = strategy
@@ -18,39 +22,42 @@ class Bt:
             self.Strategy = strategy()
 
         self.data = util.reset_data(self.Strategy.data)
-            
-        self.Broker = Broker(self.Strategy.init_capital)
+        self.Broker = Broker(Equity(self.Strategy.init_capital), commission=self.com)
 
 
-
+    
     def run(self, benchmark='^GSPC', print_sharpe=True):
-
-        self._back_test_loop(len(self.data), self.data.values, self.data.index, self.Strategy, self.Broker, self.com)
+        s = time.time()
+        self._back_test_loop(len(self.data), self.data.values, self.data.index, self.Strategy, self.Broker)
+        print(time.time() - s)
 
         # clean the last position
+    
         if self.Strategy.position != 0:
             self.Broker.liquidation(pos=self.Strategy.position, price=self.data.values[-1, :], date=self.data.index[-1]
-                                    , commission=self.com)
+                                    )
 
         record = self.Broker.get_log()
-
         report, performance = Report(self.data, record, self.Strategy.init_capital, print_sharpe).result(benchmark)
-
         return report, performance
+
 
     def get_plot(self, subplot_technical_index: list = None, overlap=None, sub_plot_param=None, overlap_param=None,
                  log=None, callback=None):
         get_plotly(self.data, subplot_technical_index, overlap=overlap, sub_plot_param=sub_plot_param
                    , overlap_param=overlap_param, log=log, callback=callback)
         
-    @jit
+    
     def _back_test_loop(self, data_length, data_values: np.array, data_index: pd.Timestamp, 
-                    strategy_class: Strategy, broker_class: Broker, com: Union[None, float]) -> None:
+                    strategy_class: Strategy, broker_class: Broker) -> None:
         
         for i in range(1, data_length - 1):
             ohlc = data_values[i + 1, :4]
             strategy_class.signal(i)
-            broker_class.check_order(ohlc, date=data_index[i + 1], commission=com)
+            broker_class.check_order(ohlc, date=data_index[i + 1])
+            # broker_class.check_if_sl_or_sp(ohlc=ohlc, date=data_index[i + 1])
+
+
 
 
 class Report:
@@ -78,7 +85,7 @@ class Report:
     def yearly_performance(self, benchmark):
         record_df = self.log.copy()
 
-        out_put = pd.DataFrame()
+        out_put_list = []
         count = 0
         for y in record_df['SellDate'].dt.year.unique():
 
@@ -104,17 +111,19 @@ class Report:
             performance_df['權益'] = round(record_df['Equity'][count - 1])
 
             performance_df.index = [y]
-            out_put = pd.concat([out_put, performance_df])
+            out_put_list.append(performance_df)
+
+        out_put = pd.concat(out_put_list)
 
         out_put['年化報酬率(%)'] = statistic.geo_yearly_ret(out_put)
         out_put['權益年化報酬率(%)'] = statistic.geo_yearly_ret(out_put, field='權益累積年度報酬(%)')
+        
         # if there are market index data
-        try:
+        if benchmark:
             market_yearly_return = statistic.index_geo_yearly_ret(self.df, index=benchmark)
 
             out_put = pd.concat([out_put, market_yearly_return], 1)
-        except:
-            print(f'There is no {benchmark} data ')
+
 
         if self.print:
             util.print_result(sharpe=statistic.year_sharpe(out_put), calmar=statistic.calmar_ratio(out_put, record_df))

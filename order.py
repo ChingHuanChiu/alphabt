@@ -1,8 +1,14 @@
 class Order:
-    def __init__(self, unit, limit_price, stop_loss, stop_profit, trading_date=None, is_fill=False, is_parent=True):
+    def __init__(self, unit, 
+                       stop_loss, 
+                       stop_profit, 
+                       trading_date=None, 
+                       is_fill=False, 
+                       is_parent=True):
+
+                       
         self._unit = unit
 
-        self.limit_price = limit_price
         self.stop_loss = stop_loss
         self.stop_profit = stop_profit
         self.trading_date = trading_date

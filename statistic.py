@@ -30,12 +30,12 @@ def profit_factor(record_df_year):
     profit = record_df_year[record_df_year['profit(元)'] > 0]['profit(元)'].sum()
     loss = -(record_df_year[record_df_year['profit(元)'] < 0]['profit(元)'].sum())
 
-    if 0 != loss:
-        pf = round(profit / loss, 2)
+    if loss != 0:
+        pf = profit / loss
     else:
-        pf = round(profit / 1e-06, 2)
+        pf = profit / 1e-06
 
-    return [pf]
+    return [round(pf, 3)]
 
 
 def equity(log, init_equity):
