@@ -2,13 +2,21 @@
 
 # Overview
 
-Backtest the trading strategy on stocks and buy(sell) at next open when the signal appears，the following features:
+Backtest the trading strategy on stocks and buy(sell) at next open price when the signal appears，the following features:
 
+- long stock and also can short stock
 - stop loss
 - stop profit
-- position overweight
 - TaLib feature
 
+# Strategy Method and Property
+
+- close_position() : when you want to close the position
+- buy() : buy action
+- sell() : sell action
+- long_position -> Boolean: in long position
+- short_position -> Boolean: in short position
+- empty_position -> Boolean: in empty position 
 
 # Usage
 
@@ -38,7 +46,7 @@ class TEMA(Strategy):
             self.buy()
         # Only sell with long position
         if (self.tema['13TEMA'][index] > self.tema['8TEMA'][index]) & (self.long_position):
-            self.sell()
+            self.close_position()
 
 log, per = Bt(TEMA, commission=None).run()
 # plot
