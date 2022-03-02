@@ -1,6 +1,5 @@
 import pandas as pd
 
-from numba import jit
 
 from plot import get_plotly
 from broker import *
@@ -9,7 +8,6 @@ from alphabt.strategy import Strategy, Equity
 from alphabt.accessor import Accessor
 import statistic
 
-import time 
 
 class Bt:
     def __init__(self, strategy, commission=None):
@@ -27,9 +25,7 @@ class Bt:
 
     
     def run(self, benchmark='^GSPC', print_sharpe=True):
-        s = time.time()
         self._back_test_loop(len(self.data), self.data.values, self.data.index, self.Strategy, self.Broker)
-        print(time.time() - s)
 
         # clean the last position
     

@@ -51,7 +51,8 @@ class Broker:
 
                 if 1 > o.units > 0 :
                     o.units = 1 if o.units == 0.0001 else o.units
-                    size = int((self.equity_instance.equity * o.units) / trading_price)
+                    
+                    size = int((self.equity_instance.equity * o.units) / util.adjust_price(trade=o, commission=self.commission))
                     setattr(o, 'units', size)
 
                 if o.stop_loss:
@@ -69,7 +70,7 @@ class Broker:
 
                 if -1 < o.units < 0:
                     o.units = -1 if o.units == -0.0001 else o.units
-                    size = int((self.equity_instance.equity * o.units) / trading_price)
+                    size = int((self.equity_instance.equity * o.units) / util.adjust_price(trade=o, commission=self.commission))
 
                     setattr(o, 'units', size)
 
