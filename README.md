@@ -48,7 +48,10 @@ class TEMA(Strategy):
         if (self.tema['13TEMA'][index] > self.tema['8TEMA'][index]) & (self.long_position):
             self.close_position()
 
-log, per = Bt(TEMA, commission=None).run()
+bt = Bt(TEMA, commission=None)
+bt.run()
+log, per = bt.get_report()
+
 # plot
 Bt(TEMA).get_plot(subplot_technical_index=['MA'], overlap=['TEMA'], sub_plot_param={'MA':[20, 60]}, overlap_param=None, log=log)
 ```
