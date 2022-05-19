@@ -1,5 +1,5 @@
 import pandas as pd
-
+from typing import Tuple
 
 from plot import get_plotly
 from broker import *
@@ -10,7 +10,7 @@ import statistic
 
 
 class Bt:
-    def __init__(self, strategy, commission=None):
+    def __init__(self, strategy, commission=None) -> None:
 
         Accessor.initial()
         self.com = commission
@@ -24,7 +24,7 @@ class Bt:
 
 
     
-    def run(self, benchmark='^GSPC', print_sharpe=True):
+    def run(self) -> None:
         self._back_test_loop(len(self.data), self.data.values, self.data.index, self.Strategy, self.Broker)
 
         # clean the last position
@@ -33,13 +33,18 @@ class Bt:
             self.Broker.liquidation(pos=self.Strategy.position, price=self.data.values[-1, :], date=self.data.index[-1]
                                     )
 
-        record = self.Broker.get_log()
-        report, performance = Report(self.data, record, self.Strategy.init_capital, print_sharpe).result(benchmark)
+
+
+    def get_report(self, benchmark='^GSPC', print_sharpe=True) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """Get the trading report and yearly report from trading log
+        """
+        trading_log = self.Broker.get_log()
+        report, performance = Report(self.data, trading_log, self.Strategy.init_capital, print_sharpe).result(benchmark)
         return report, performance
 
 
     def get_plot(self, subplot_technical_index: list = None, overlap=None, sub_plot_param=None, overlap_param=None,
-                 log=None, callback=None):
+                 log=None, callback=None) -> None:
         get_plotly(self.data, subplot_technical_index, overlap=overlap, sub_plot_param=sub_plot_param
                    , overlap_param=overlap_param, log=log, callback=callback)
         
@@ -59,7 +64,7 @@ class Bt:
 class Report:
     def __init__(self, df, log_df, init_capital, print_sharpe: bool):
         self.df = df
-        self.log = log_df
+        self.log = log_df.copy()
         self.init_cap = init_capital
         self.print = print_sharpe
 
@@ -79,7 +84,7 @@ class Report:
         return trading_df
 
     def yearly_performance(self, benchmark):
-        record_df = self.log.copy()
+        record_df = self.log
 
         out_put_list = []
         count = 0
