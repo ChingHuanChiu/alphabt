@@ -48,7 +48,7 @@ class TEMA(Strategy):
         if (self.tema['13TEMA'][index] > self.tema['8TEMA'][index]) & (self.long_position):
             self.close_position()
 
-bt = Bt(TEMA, commission=None)
+bt = Backtest(TEMA, commission=None)
 bt.run()
 log, per = bt.get_report()
 
