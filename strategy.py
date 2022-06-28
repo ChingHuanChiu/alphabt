@@ -4,6 +4,7 @@ from abc import ABCMeta, abstractmethod
 
 # from alphabt.accessor import Accessor
 from alphabt.broker import Broker, Position
+from alphabt import taindicator
 from alphabt import statistic
 
 
@@ -18,7 +19,7 @@ class Strategy(metaclass=ABCMeta):
     def signal(self, index):
         """the main strategy logic
         """
-        ...
+        raise NotImplemented
 
     def buy(self, unit=None, stop_loss=None, stop_profit=None):
         if unit is None:
@@ -35,9 +36,16 @@ class Strategy(metaclass=ABCMeta):
         Broker.make_order(unit=unit, stop_loss=stop_loss, stop_profit=stop_profit)
    
 
-    def indicator(self, name, timeperiod=None):
+    def indicator(self, name, timeperiod=None, return_info: bool=False, **parameters):
 
-        return statistic.indicator(self.data, name, timeperiod)
+        return taindicator.indicator(data=self.data, 
+                                     name=name,
+                                     timeperiod=timeperiod,
+                                     return_info=return_info,
+                                     **parameters
+        )
+
+        # return statistic.indicator(self.data, name, timeperiod)
 
     def close_position(self):
         """close the position 
@@ -62,6 +70,35 @@ class Strategy(metaclass=ABCMeta):
     def short_position(self):
         return Position.status() < 0
     
+
+
+
+class PortfoiloStrategy(metaclass=ABCMeta):
+
+    def __init__(self) -> None:
+        ...
+
+    @abstractmethod
+    def buy(self):
+        raise NotImplemented
+
+    @abstractmethod
+    def sell(self):
+        raise NotImplemented
+
+
+    def indicator(self, name, timeperiod=None, return_info: bool=False, **parameters):
+
+        return taindicator.indicator(data=None, 
+                                     name=name,
+                                     timeperiod=timeperiod,
+                                     return_info=return_info,
+                                     **parameters
+        )
+    
+
+    
+
 
 class Equity:
 

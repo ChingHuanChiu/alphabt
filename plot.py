@@ -8,6 +8,7 @@ import numpy as np
 import plotly.graph_objects as go
 import statistic
 import pandas as pd
+import taindicator
 from plotly.subplots import make_subplots
 
 
@@ -57,12 +58,17 @@ def _subplot_indicator(subplot_technical_index, sub_plot_param, data, fig, row):
         for n, ind in enumerate(subplot_technical_index):
             if sub_plot_param is not None:
                 try:
-                    df = statistic.indicator(data, ind, sub_plot_param[ind])
+                    df_list = []
+                    for timeperiod in sub_plot_param[ind]:
+                        _df = taindicator.indicator(data=data, name=ind, timeperiod=timeperiod)
+                        _df.columns = [f"{timeperiod}{ind}"]
+                        df_list.append(_df)
+                    df = pd.concat(df_list, 1)
                 except:
-                    df = statistic.indicator(data, ind)
+                    df = taindicator.indicator(data=data, name=ind)
 
             else:
-                df = statistic.indicator(data, ind)
+                df = taindicator.indicator(data=data, name=ind)
 
             add_trace(fig, df, row=row + n)
 
@@ -102,10 +108,11 @@ def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param
             
             index_start_year = min(log['BuyDate'][0].year, log['SellDate'][0].year)
             index_end_year = max(log['BuyDate'].iloc[-1].year, log['SellDate'].iloc[-1].year)
-
-            index_return = statistic.index_accumulate_return(index_start_year, index_end_year, index='^GSPC')
-        except:
+            index_return = statistic.index_accumulate_return(str(index_start_year), str(index_end_year), index='^GSPC')
+        except Exception as e:
+            # TODO: catch the e message
             index_return = [0] * len(log)
+
 
         fig.add_trace(go.Scatter(x=date, y=log['累積報酬率(%)'],
                                  mode='lines',
@@ -145,10 +152,13 @@ def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param
         for ind in overlap:
             if overlap_param is not None:
                 # overlappara={'MA': [5, 10, 20]}
-                add_trace(fig, statistic.indicator(data, ind, overlap_param[ind]), row=1)
+                for timeperiod in overlap_param[ind]:
+                    _df = taindicator.indicator(data=data, name=ind, timeperiod=timeperiod)
+                    _df.columns = [f"{timeperiod}{ind}"]
+                    add_trace(fig, _df, row=1)
             else:
 
-                add_trace(fig, statistic.indicator(data, ind), row=1)
+                add_trace(fig, taindicator.indicator(data=data, name=ind), row=1)
 
     fig.show()
 

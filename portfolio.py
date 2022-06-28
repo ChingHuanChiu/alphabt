@@ -12,7 +12,7 @@ from pandas.tseries.offsets import CustomBusinessDay
 
 from alphabt.strategy import Strategy
 from alphabt.backtest import Backtest
-from alphabt.statistic import indicator, index_accumulate_return
+from alphabt.statistic import index_accumulate_return
 
 US_BUSINESS_DAY = CustomBusinessDay(calendar=USFederalHolidayCalendar())
 

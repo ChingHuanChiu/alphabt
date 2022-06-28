@@ -9,7 +9,9 @@ from alphabt.order import Order
 def reset_data(data_frame: pd.DataFrame) -> pd.DataFrame:
     data_frame.index = pd.to_datetime(data_frame.index)
     data_frame.columns = [c.lower() for c in data_frame.columns]
-    data_frame = data_frame[['open', 'high', 'low', 'close', 'volume', 'symbol']]
+    if 'symbol' in data_frame.columns:
+        data_frame = data_frame.rename(columns={'symbol': 'ticker'})
+    data_frame = data_frame[['open', 'high', 'low', 'close', 'volume', 'ticker']]
     return data_frame
 
 

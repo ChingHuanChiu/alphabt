@@ -1,9 +1,12 @@
+from sys import path
+path.extend(['./'])
 import numpy as np
 import pandas as pd
 from talib import abstract
 from typing import List
 
-from alphabt.data import Data
+from data.data import Data
+
 
 
 def annual_profit(record_df_year):
@@ -157,7 +160,8 @@ def geo_yearly_ret(per, field='累積年度報酬(%)'):
 
 
 def index_accumulate_return(start, end, index='^GSPC'):
-    data = Data().get(symbol=[index], date_range=(start, end))['close']
+    Data.datasource = 'yfapi'
+    data = Data().get_data(ticker=index, startdate=start, enddate=end)['close']
     cum_return = round(((1 + data.pct_change()).cumprod() - 1) * 100, 3)
     # cum_return = cum_return[index]
     return cum_return
@@ -179,54 +183,54 @@ def index_geo_yearly_ret(df, index='^GSPC'):
                         index=list(geo_ret_dict.keys()), columns=['大盤年化報酬率(%)'])
 
 
-def indicator(data, name: str, timeperiod: List[int] = None):
-    """
+# def indicator(data, name: str, timeperiod: List[int] = None):
+#     """
 
-    :param data: stock data with "close", "open", "high", "low", "volume"
-    :param name: function name of TA-Lib package
-    :param timeperiod: parameter of TA-Lib method
-    :return:
-    """
+#     :param data: stock data with "close", "open", "high", "low", "volume"
+#     :param name: function name of TA-Lib package
+#     :param timeperiod: parameter of TA-Lib method
+#     :return:
+#     """
 
-    OHLCV = {'open':   data['open'],
-             'high':   data['high'],
-             'low':    data['low'],
-             'close':  data['close'],
-             'volume': data['volume']
-             }
+#     OHLCV = {'open':   data['open'],
+#              'high':   data['high'],
+#              'low':    data['low'],
+#              'close':  data['close'],
+#              'volume': data['volume']
+#              }
 
-    ret = pd.DataFrame(index=data.index)
-    f = getattr(abstract, name)
-    output_names = f.output_names
+#     ret = pd.DataFrame(index=data.index)
+#     f = getattr(abstract, name)
+#     output_names = f.output_names
 
-    if timeperiod is not None:
-        for t in timeperiod:
+#     if timeperiod is not None:
+#         for t in timeperiod:
 
-            s = f(OHLCV, timeperiod=t)
-            s = pd.to_numeric(s, errors='coerce')
+#             s = f(OHLCV, timeperiod=t)
+#             s = pd.to_numeric(s, errors='coerce')
 
-            if len(output_names) == 1:
-                dic = s
-                s_df = pd.DataFrame(dic, index=data.index,
-                                    columns=['{}'.format(t) + name])  # 當output_names=1時，s為array
-            else:
-                s = s.T
-                output_names_col = [f'{n}_{str(t)}' for n in output_names]
-                s_df = pd.DataFrame(s, index=data.index, columns=output_names_col)  # 當output_names>1時，s為list
-            ret = pd.concat([ret, s_df], axis=1)
-    else:
+#             if len(output_names) == 1:
+#                 dic = s
+#                 s_df = pd.DataFrame(dic, index=data.index,
+#                                     columns=['{}'.format(t) + name])  # 當output_names=1時，s為array
+#             else:
+#                 s = s.T
+#                 output_names_col = [f'{n}_{str(t)}' for n in output_names]
+#                 s_df = pd.DataFrame(s, index=data.index, columns=output_names_col)  # 當output_names>1時，s為list
+#             ret = pd.concat([ret, s_df], axis=1)
+#     else:
 
-        s = f(OHLCV)
-        s = pd.to_numeric(s, errors='coerce')
-        if len(output_names) == 1:
-            dic = s
-            s_df = pd.DataFrame(dic, index=data.index, columns=[name])
-        else:
-            s = s.T
-            s_df = pd.DataFrame(s, index=data.index, columns=output_names)
+#         s = f(OHLCV)
+#         s = pd.to_numeric(s, errors='coerce')
+#         if len(output_names) == 1:
+#             dic = s
+#             s_df = pd.DataFrame(dic, index=data.index, columns=[name])
+#         else:
+#             s = s.T
+#             s_df = pd.DataFrame(s, index=data.index, columns=output_names)
 
-        ret = pd.concat([ret, s_df], axis=1)
-    return ret
+#         ret = pd.concat([ret, s_df], axis=1)
+#     return ret
 
 
 

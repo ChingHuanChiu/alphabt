@@ -1,15 +1,32 @@
 import pandas as pd
-from typing import Tuple
+from typing import Tuple, Optional
 
 from plot import get_plotly
 from broker import *
 from alphabt import util
-from alphabt.strategy import Strategy, Equity
+from alphabt.strategy import Strategy, PortfoiloStrategy , Equity
 from alphabt.accessor import Accessor
 from alphabt.report import Report
 
 
+
 class Backtest:
+    """TODO: check type['Self']
+    """
+    def __new__(cls, strategy, commission=None, **kwargs) :
+            if issubclass(strategy, Strategy):
+                self = _Bt(strategy=strategy, commission=commission)
+
+            elif issubclass(strategy, PortfoiloStrategy):
+                pass
+            else:
+                pass
+            return self
+
+
+
+
+class _Bt:
     def __init__(self, strategy, commission=None) -> None:
 
         Accessor.initial()
@@ -61,5 +78,33 @@ class Backtest:
 
 
 
+class _PortBt:
+    def __init__(self) -> None:
+        ...
+
+    def run(self):
+        ...
 
 
+def _bt_factory(stock_data: pd.DataFrame, initial_equity: int, stop_loss: Optional[float], stop_profit: Optional[float]):
+    """factory function for the _PortBt class, 
+       the main idea of this class is that giving a range of date of ticker data and doing backtest by signal column
+
+       @stock_data pd.DataFrame : which include: OHLC and  signal, 1 or -1
+       @initial_equity int :  initial equity
+       @stop_loss Optional[float] : sell the stock when touch the stop loss price
+       @stop_profit Optional[float] : sell the stock when touch the stop profit price
+    """
+    class Pt(Strategy):
+        def __init__(self) -> None:
+            self.init_capital = initial_equity
+            self.data = stock_data
+
+        def signal(self, index):
+            if (self.data[index] == 1) & (self.empty_position):
+                self.buy(stop_loss=stop_loss, stop_profit=stop_profit)
+
+            if (self.data[index] == -1) & (self.long_position):
+                self.close_position()
+
+    return Pt
