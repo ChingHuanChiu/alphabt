@@ -38,14 +38,17 @@ class TEMA(Strategy):
         # setting initial capital
         self.init_capital = 100000
         # use the TaLib feature
-        self.tema = self.indicator('TEMA', [8, 13, 21, 34, 55])
+        self.tema_8 = self.indicator('TEMA', 8)['TEMA'].vaiues
+        self.tema_13 = self.indicator('TEMA', 13)['TEMA'].values
+
+
 
     def signal(self, index):
         # Only buy the stock with empty position
-        if (self.tema['8TEMA'][index] > self.tema['13TEMA'][index]) & (self.empty_position):
+        if (self.tema_8[index] > self.tema_13[index]) & (self.empty_position):
             self.buy()
         # Only sell with long position
-        if (self.tema['13TEMA'][index] > self.tema['8TEMA'][index]) & (self.long_position):
+        if (self.tema_13[index] > self.tema_8[index]) & (self.long_position):
             self.close_position()
 
 bt = Backtest(TEMA, commission=None)
