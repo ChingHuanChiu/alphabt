@@ -95,3 +95,11 @@ class CCI(Strategy):
             self.sell(unit=-1)   
 ```
 
+# TODO
+
+- Portfolio backtest 
+    - _PortBt class test
+    - write trading log parser in report.py
+    - plot class
+
+- UnitTest
