@@ -45,4 +45,4 @@ class DataFromLocal(Handler):
     def get_data(self, field: str = None) -> pd.DataFrame:
         if field is None or field not in ['close', 'open', 'high', 'low', 'volume', 'adjclose']:
             raise ValueError('field must be one of [close, open, high, low, volume, adjclose]')
-        return pd.read_pickle(f'./storage/{field}.pkl')
+        return pd.read_pickle(f'alphabt/data/storage/{field}.pkl')

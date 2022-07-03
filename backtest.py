@@ -1,5 +1,6 @@
 import pandas as pd
-from typing import Tuple, Optional
+from pandas.tseries.offsets import BDay
+from typing import Tuple, Optional, Dict
 
 from plot import get_plotly
 from broker import *
@@ -7,6 +8,7 @@ from alphabt import util
 from alphabt.strategy import Strategy, PortfoiloStrategy , Equity
 from alphabt.accessor import Accessor
 from alphabt.report import Report
+from alphabt.data.data import Data
 
 
 
@@ -18,9 +20,9 @@ class Backtest:
                 self = _Bt(strategy=strategy, commission=commission)
 
             elif issubclass(strategy, PortfoiloStrategy):
-                pass
-            else:
-                pass
+                print("It's pedding...")
+                self = _PortBt(...)
+
             return self
 
 
@@ -71,7 +73,6 @@ class _Bt:
             ohlc = data_values[i + 1, :4]
             strategy_class.signal(i)
             broker_class.check_order(ohlc, date=data_index[i + 1])
-            # broker_class.check_if_sl_or_sp(ohlc=ohlc, date=data_index[i + 1])
 
 
 
@@ -79,14 +80,86 @@ class _Bt:
 
 
 class _PortBt:
-    def __init__(self) -> None:
-        ...
+    def __init__(self, strategy: PortfoiloStrategy, commision: float, stop_loss: float, stop_profit: float) -> None:
+        self.strategy = strategy
+        self.commision = commision
+        self.sl = stop_loss
+        self.sp = stop_profit
+
+        Data.datasource = 'yflocal'
+        data = Data()
+        self._close = data.get_data('close')
+        self._open = data.get_data('open')
+        self._high = data.get_data('high')
+        self._low = data.get_data('low')
+        self._vol = data.get_data('volume')
 
     def run(self):
-        ...
 
 
-def _bt_factory(stock_data: pd.DataFrame, initial_equity: int, stop_loss: Optional[float], stop_profit: Optional[float]):
+        for start_date, end_date in self._date_iter_periodicity():
+            select_ticker = ['a', 'b']
+            _equity_recoder = []
+            _log_recoder = []
+            tickers_data = self._make_stock_data(select_ticker, start_date, end_date)
+            if Equity.equity is None:
+                equity = self.strategy.init_equity
+            else:
+                equity = sum(_equity_recoder)
+
+            equity_per_ticker = self._allocate_equity(equity=equity)
+            for _t in select_ticker:
+                strategy_class = _bt_factory(stock_data=tickers_data[_t], initial_equity=equity_per_ticker[_t], stop_loss=self.sl, stop_profit=self.sp)
+                bt = _Bt(strategy=strategy_class, commission=self.commision)
+                bt.run()
+                _equity_recoder.append(Equity.equity)
+                _log_recoder.append(bt.Broker.get_log())
+        
+        return _log_recoder # tmp return for testing
+
+
+
+                
+
+    def _allocate_equity(self, equity: float, tickers_list: List[str], method: str = 'mean'):
+        """TODO: add more allocate method
+        """
+
+        if method == 'mean':
+            equity_per_ticker = equity // len(tickers_list)
+            return {ticker: equity_per_ticker for ticker in tickers_list}
+
+
+
+    def _date_iter_periodicity(date_list, hold_days):
+        
+
+        date = date_list[0]
+        end_date = date_list[-1]
+        while date < end_date:
+            yield (date), (date + BDay(hold_days))
+            date += BDay(hold_days)
+
+
+
+    def _make_stock_data(self, tickers_list: List[str], st_date, end_date) -> Dict[str, pd.DataFrame]:
+
+        res = dict()
+  
+        for ticker in tickers_list:
+            sub_data = [self._close[ticker][st_date: end_date], self._open[ticker][st_date: end_date], 
+                        self._high[ticker][st_date: end_date], self._low[ticker][st_date: end_date], self._vol[ticker][st_date: end_date]]
+
+            sub_df = pd.concat(sub_data, 1)
+            sub_df.columns = ['close', 'open', 'high', 'low', 'vol']
+            sub_df['ticker'] = [ticker] * self._close[ticker][st_date: end_date].shape[0]
+            res[ticker] = sub_df
+        return res
+
+
+
+
+def _bt_factory(stock_data: pd.DataFrame, initial_equity: int, stop_loss: Optional[float], stop_profit: Optional[float]) -> Strategy:
     """factory function for the _PortBt class, 
        the main idea of this class is that giving a range of date of ticker data and doing backtest by signal column
 
