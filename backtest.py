@@ -80,11 +80,12 @@ class _Bt:
 
 
 class _PortBt:
-    def __init__(self, strategy: PortfoiloStrategy, commision: float, stop_loss: float, stop_profit: float) -> None:
+    def __init__(self, strategy: PortfoiloStrategy, holding_days: int, commision: float=None, stop_loss: float=None, stop_profit: float=None) -> None:
         self.strategy = strategy
         self.commision = commision
         self.sl = stop_loss
         self.sp = stop_profit
+        self.holding_days = holding_days
 
         Data.datasource = 'yflocal'
         data = Data()
@@ -94,20 +95,25 @@ class _PortBt:
         self._low = data.get_data('low')
         self._vol = data.get_data('volume')
 
+        # start fromm here !!! signal=1 means buying, otherwise selling
+        self.trading_signal = self.strategy.buy() + self.strategy.sell() * -1
+
+
     def run(self):
 
 
-        for start_date, end_date in self._date_iter_periodicity():
-            select_ticker = ['a', 'b']
+        for start_date, end_date in self._date_iter_periodicity(date_list=self._close.index, hold_days=self.holding_days):
+            select_ticker = ['T', 'AAPL', 'DIS'] #TODO: generate signal from portfolio strategy
             _equity_recoder = []
             _log_recoder = []
             tickers_data = self._make_stock_data(select_ticker, start_date, end_date)
+            
             if Equity.equity is None:
                 equity = self.strategy.init_equity
             else:
                 equity = sum(_equity_recoder)
 
-            equity_per_ticker = self._allocate_equity(equity=equity)
+            equity_per_ticker = self._allocate_equity(equity=equity, tickers_list=select_ticker)
             for _t in select_ticker:
                 strategy_class = _bt_factory(stock_data=tickers_data[_t], initial_equity=equity_per_ticker[_t], stop_loss=self.sl, stop_profit=self.sp)
                 bt = _Bt(strategy=strategy_class, commission=self.commision)
@@ -119,7 +125,6 @@ class _PortBt:
 
 
 
-                
 
     def _allocate_equity(self, equity: float, tickers_list: List[str], method: str = 'mean'):
         """TODO: add more allocate method
@@ -131,7 +136,7 @@ class _PortBt:
 
 
 
-    def _date_iter_periodicity(date_list, hold_days):
+    def _date_iter_periodicity(self, date_list, hold_days):
         
 
         date = date_list[0]
@@ -151,7 +156,7 @@ class _PortBt:
                         self._high[ticker][st_date: end_date], self._low[ticker][st_date: end_date], self._vol[ticker][st_date: end_date]]
 
             sub_df = pd.concat(sub_data, 1)
-            sub_df.columns = ['close', 'open', 'high', 'low', 'vol']
+            sub_df.columns = ['close', 'open', 'high', 'low', 'volume']
             sub_df['ticker'] = [ticker] * self._close[ticker][st_date: end_date].shape[0]
             res[ticker] = sub_df
         return res
@@ -163,7 +168,7 @@ def _bt_factory(stock_data: pd.DataFrame, initial_equity: int, stop_loss: Option
     """factory function for the _PortBt class, 
        the main idea of this class is that giving a range of date of ticker data and doing backtest by signal column
 
-       @stock_data pd.DataFrame : which include: OHLC and  signal, 1 or -1
+       @stock_data pd.DataFrame : which include: OHLCV and  signal, 1 or -1
        @initial_equity int :  initial equity
        @stop_loss Optional[float] : sell the stock when touch the stop loss price
        @stop_profit Optional[float] : sell the stock when touch the stop profit price
