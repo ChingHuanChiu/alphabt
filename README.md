@@ -97,9 +97,5 @@ class CCI(Strategy):
 
 # TODO
 
-- Portfolio backtest 
-    - _PortBt class test
-    - write trading log parser in report.py
-    - plot class
-
 - UnitTest
+- Develope portfolio bt
