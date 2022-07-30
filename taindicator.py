@@ -45,13 +45,8 @@ class TaLibIndicator:
         self.parameters = self.f.parameters
         output_names_length: int = len(self.output_names)
 
-        # for t in self.tickers:
-        #     OHLCV = self._makeOHLCV(t=t)
-        #     indicator_data: Union[List[np.array], np.array] = self.f(OHLCV, timeperiod=timeperiod, **parameters)
-            # indicator_data: Union[List[float], List[List[float]]] = pd.to_numeric(indicator_data, errors='coerce')
 
-            # _dict[t] = indicator_data
-        
+        # TODO: cost tom much time , need to be corrected
         _dict = {t: self.f(self._makeOHLCV(t=t), timeperiod=timeperiod, **parameters) for t in self.tickers}
 
 

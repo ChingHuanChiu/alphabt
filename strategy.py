@@ -73,33 +73,6 @@ class Strategy(metaclass=ABCMeta):
 
 
 
-class PortfoiloStrategy(metaclass=ABCMeta):
-
-    def __init__(self) -> None:
-        ...
-
-    @abstractmethod
-    def buy(self):
-        raise NotImplemented
-
-    @abstractmethod
-    def sell(self):
-        raise NotImplemented
-
-
-    def indicator(self, name, timeperiod=None, return_info: bool=False, **parameters):
-
-        return taindicator.indicator(data=None, 
-                                     name=name,
-                                     timeperiod=timeperiod,
-                                     return_info=return_info,
-                                     **parameters
-        )
-    
-
-    
-
-
 class Equity:
 
     _equity = None

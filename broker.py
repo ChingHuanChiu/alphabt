@@ -24,7 +24,6 @@ class Broker:
 
     @staticmethod
     def make_order(unit: Union[float, int], stop_loss: float, stop_profit: float) -> None:
-
         Accessor._order_queue.append(Order(unit, stop_loss, stop_profit))
 
 
@@ -35,6 +34,7 @@ class Broker:
         open_price = ohlc[0]
 
         for o in Accessor._order_queue:
+
 
             position = Position.status()
 
@@ -48,10 +48,10 @@ class Broker:
             setattr(o, 'trading_date', date)
 
             if o.is_long:
-
+                
                 if 1 > o.units > 0 :
                     o.units = 1 if o.units == 0.0001 else o.units
-                    
+                    # TODO : need code to check that size cannot be zero
                     size = int((self.equity_instance.equity * o.units) / util.adjust_price(trade=o, commission=self.commission))
                     setattr(o, 'units', size)
 
@@ -85,6 +85,7 @@ class Broker:
                 # if the order is to increase position
                 if not o.is_parents:
                     Accessor._add_position_short_order.append(o)
+
 
             Accessor._order_execute.append(o)
             self._work()

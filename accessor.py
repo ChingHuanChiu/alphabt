@@ -36,9 +36,7 @@ class Accessor:
 
 
 class Position():
-    """TODO: the final type is to be like -> Position['ticker'] = [position1, ...]
-    
-    """
+
 
     def __init__(self) -> None:
         pass
