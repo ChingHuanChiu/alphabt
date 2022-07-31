@@ -46,7 +46,7 @@ class TaLibIndicator:
         output_names_length: int = len(self.output_names)
 
 
-        # TODO: cost tom much time , need to be corrected
+        # TODO: cost tom much time , need to be corrected,  https://github.com/polakowo/vectorbt/issues/45
         _dict = {t: self.f(self._makeOHLCV(t=t), timeperiod=timeperiod, **parameters) for t in self.tickers}
 
 
