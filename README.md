@@ -99,4 +99,3 @@ class CCI(Strategy):
 
 - UnitTest
 - Develope portfolio bt
-- accelerate the ta-lib indicator with numba
