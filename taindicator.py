@@ -1,6 +1,6 @@
 from sys import path
 path.extend(['./', './alphabt'])
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Optional
 
 import pandas as pd
 import numpy as np
@@ -11,44 +11,34 @@ from data.data import Data
 
 
 
+
 """TODO: need to speed up the create method in TaLibIndicator class
 """
-class TaLibIndicator:
-
+class _TaLibIndicator:
+    # maybe datasource is need to be design as a description
+    Data.datasource = 'yflocal'
+    d = Data()
     def __init__(self, data: pd.DataFrame) -> None:
         self.data = data
         self.f = None
         self.parameters = None
         self.output_names = None
-        self._open = None
-        self._close = None
-        self._high = None
-        self._low = None
-        self._volume = None
-        self.tickers = None
-        
-        if self.data is not None:
-            
-            self._open: pd.Series = self.data.open
-            self._close: pd.Series =self.data.close
-            self._high: pd.Series = self.data.high
-            self._low: pd.Series = self.data.low
-            self._volume: pd.Series = self.data.volume
-            self.tickers: np.array  = self.data.ticker.unique()
 
+        self._open = self.data.open if self.data is not None else self.d.get_data('open') 
+        self._close = self.data.close if self.data is not None  else self.d.get_data('close')
+        self._high = self.data.high if self.data is not None  else self.d.get_data('high')
+        self._low = self.data.low if self.data is not None  else self.d.get_data('low')
+        self._volume = self.data.volume if self.data is not None  else self.d.get_data('volume')
+        self.tickers = self.data.ticker.unique() if self.data is not None  else self._close.columns
 
 
     def create(self, name:str, timeperiod:int=None, **parameters) -> Union[pd.DataFrame, Tuple[pd.DataFrame, ...], List[pd.DataFrame]]:
-        # _dict = dict()
         self.f = getattr(abstract, name)
         self.output_names: List[str] = self.f.output_names
         self.parameters = self.f.parameters
         output_names_length: int = len(self.output_names)
 
-
-        # TODO: cost tom much time , need to be corrected,  https://github.com/polakowo/vectorbt/issues/45
         _dict = {t: self.f(self._makeOHLCV(t=t), timeperiod=timeperiod, **parameters) for t in self.tickers}
-
 
         if output_names_length == 1:
             res =  pd.DataFrame(_dict, index=self._close.index)
@@ -100,25 +90,13 @@ class TaLibIndicator:
                             } 
 
 
-
-
 def indicator(name: str, 
-              timeperiod: int=None, 
-              data: pd.DataFrame=None, 
+              timeperiod: Optional[int]=None, 
+              data: Optional[pd.DataFrame]=None, 
               return_info: bool=False,
-              **parameters) -> Union[pd.DataFrame, Tuple[pd.DataFrame, ...]]:
+              **parameters) -> Union[pd.DataFrame, dict]:
 
-    taindicator_instance = TaLibIndicator(data=data)
-
-
-    if data is None:
-        Data.datasource = 'yflocal'
-        data = Data()
-
-        for attr in ['open', 'close', 'high', 'low', 'volume']:
-            setattr(taindicator_instance, f'_{attr}', data.get_data(attr))
-        setattr(taindicator_instance, 'tickers', data.get_data('close').columns)
-
+    taindicator_instance = _TaLibIndicator(data=data)
     
     res = taindicator_instance.create(name, 
                                     timeperiod=timeperiod, 
