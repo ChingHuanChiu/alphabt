@@ -2,48 +2,29 @@
 from typing import Dict
 
 from data.handler import YFDataFromAPI, CsvData, Handler, DataFromLocal
-
+from data.descriptor import DataSourceDescriptor
 
 class _SourceField:
 
     field: Dict[str, Handler] = {'yfapi': YFDataFromAPI, 'csv': CsvData, 'yflocal': DataFromLocal}
 
-
+class DataSource:
+    source = DataSourceDescriptor()
 
 class Data:
-    
-    _datasource = None
+    datasource = None
 
     def __new__(cls, **kwargs):
-        if cls.datasource is None:
-            raise ValueError('You must set the data source first')
-        else:
-            if cls.datasource not in _SourceField.field:
-                raise ValueError(f'datasource must be one of {_SourceField.field.keys()}')
-            else:
-                self = _SourceField.field[cls.datasource](**kwargs)
+        data_source = DataSource()
+        data_source.source = cls.datasource 
+        # if data_source.src  is None or data_source.src  not in ['yfapi', 'yflocal', 'csv']:
+        #     raise ValueError(f'data source must be one of yfapi, yflocal or csv')
+        self = _SourceField.field[data_source.source ](**kwargs)
         return self
 
-    def __init__(self, **kwargs) -> None:
 
-        ...
-
-
-
-    @property
-    @classmethod
-    def datasource(cls):
-        return cls._datasource
-
-
-    @datasource.setter
-    @classmethod
-    def datasource(cls, source: str = 'yfapi'):
-        """ 
-            @param source str: setting the data source, default is from yahoo api 
         
-        """
-        cls._datasource = source
+
 
 
 
