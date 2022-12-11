@@ -95,7 +95,3 @@ class CCI(Strategy):
             self.sell(unit=-1)   
 ```
 
-# TODO
-
-- UnitTest
-- Develope portfolio bt
