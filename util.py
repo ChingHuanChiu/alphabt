@@ -38,32 +38,32 @@ def print_result(sharpe, calmar) -> None:
 
 
 
-accessor = Accessor
-def touch_stop_loss(order: Order, price: float, date:pd.Timestamp) -> bool:
+# accessor = Accessor
+# def touch_stop_loss(order: Order, price: float, date:pd.Timestamp) -> bool:
 
-    if order.is_long:
-        con = order.stop_loss and price <= order.stop_loss_prices and order.is_filled and date not in [
-            order.trading_date for order in accessor._order_execute]
+#     if order.is_long:
+#         con = order.stop_loss and price <= order.stop_loss_prices and order.is_filled and date not in [
+#             order.trading_date for order in accessor._order_execute]
 
-        return con
-    else:
-        con = order.stop_loss and price >= order.stop_loss_prices and order.is_filled and date not in [
-            order.trading_date for order in accessor._order_execute]
+#         return con
+#     else:
+#         con = order.stop_loss and price >= order.stop_loss_prices and order.is_filled and date not in [
+#             order.trading_date for order in accessor._order_execute]
 
-        return con
+#         return con
 
 
-def touch_stop_profit(order: Order, price: float, date:pd.Timestamp) -> bool:
+# def touch_stop_profit(order: Order, price: float, date:pd.Timestamp) -> bool:
 
-    if order.is_long:
-        con = order.stop_profit and price >= order.stop_profit_prices and order.is_filled and date not in [
-            order.trading_date for order in accessor._order_execute]
+#     if order.is_long:
+#         con = order.stop_profit and price >= order.stop_profit_prices and order.is_filled and date not in [
+#             order.trading_date for order in accessor._order_execute]
 
-        return con
-    else:
-        con = order.stop_profit and price <= order.stop_profit_prices and order.is_filled and date not in [
-            order.trading_date for order in accessor._order_execute]
+#         return con
+#     else:
+#         con = order.stop_profit and price <= order.stop_profit_prices and order.is_filled and date not in [
+#             order.trading_date for order in accessor._order_execute]
 
-        return con
+#         return con
 
 

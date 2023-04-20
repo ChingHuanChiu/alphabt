@@ -15,6 +15,7 @@ from data.data import Data
 """TODO: need to speed up the create method in TaLibIndicator class
 """
 class _TaLibIndicator:
+    # maybe datasource is need to be design as a description
     Data.datasource = 'yflocal'
     d = Data()
     def __init__(self, data: pd.DataFrame) -> None:
