@@ -2,11 +2,11 @@
 
 class EquityManager:
 
-    _equity = None
+    _equity_queue = None
 
     def __init__(self, initial_equity: float) -> None:
         
-        self.init_equity = initial_equity
+        self.equity = initial_equity
 
     @property
     def equity(self) -> float:
