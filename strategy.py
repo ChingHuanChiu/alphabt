@@ -18,8 +18,8 @@ class Strategy(metaclass=ABCMeta):
         self.init_capital = None
 
         self.ticker = None
-        self.trading_price = None
-        self.trading_date = None
+        self.entry_price = None
+        self.entry_date = None
 
 
     @abstractmethod
@@ -29,8 +29,8 @@ class Strategy(metaclass=ABCMeta):
         """
         # trading at next day (index+1) if signal appear
         self.ticker = self.data["ticker"][index+1]
-        self.trading_price = self.data["close"][index+1]
-        self.trading_date = self.data["date"][index+1]
+        self.entry_price = self.data["close"][index+1]
+        self.entry_date = self.data["date"][index+1]
 
 
     def long(self, 
@@ -39,34 +39,33 @@ class Strategy(metaclass=ABCMeta):
              stop_profit: Optional[float] = None) -> None:
         
         if unit is None:
-            unit = 0.0001
-        assert unit > 0, f'unit must be positive but {unit} with long action'
-
+            unit = 1
 
         Broker.make_order(unit=unit, 
                           stop_loss=stop_loss, 
                           stop_profit=stop_profit,
                           action='long',
                           ticker=self.ticker,
-                          trading_price = self.trading_price,
-                          trading_date=self.trading_date
+                          trading_price = self.entry_price,
+                          trading_date=self.entry_date
                           )
 
 
     def short(self, 
-             unit: Union[int, float] = None, 
-             stop_loss: Optional[float] = None, 
-             stop_profit: Optional[float] = None) -> None:
+              unit: Union[int, float] = None, 
+              stop_loss: Optional[float] = None, 
+              stop_profit: Optional[float] = None) -> None:
         
         if unit is None:
-            unit =  -0.0001 
-        assert unit < 0 or unit is None, f' in sell action, unit must be negative but {unit}'
+            unit =  -1
 
         Broker.make_order(unit=unit, 
                           stop_loss=stop_loss, 
                           stop_profit=stop_profit,
                           action='short',
-                          ticker=self.ticker
+                          ticker=self.ticker,
+                          trading_price = self.entry_price,
+                          trading_date=self.entry_date
                           )
 
 

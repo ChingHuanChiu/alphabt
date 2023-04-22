@@ -4,27 +4,18 @@ from typing import Union, List, Optional
 import pandas as pd
 
 from alphabt.order.order import Order
-from alphabt.order.manager import OrderManager
-from alphabt.position.manager import PositionManager
-from alphabt.equity.manager import EquityManager
 from alphabt.broker.condition import StopLossCondition, StopProfitCondition
 
 
 class Broker:
+      
+    equity_manager = None
+    position_manager = None
+    order_manager = None
 
-    def __init__(self, 
-                 equity_manager: EquityManager, 
-                 position_manager: PositionManager,
-                 order_manager: OrderManager
-                 ) -> None:
-        # self.commission = commission
-        self.equity_manager = equity_manager
-        self.position_manager = position_manager
-        self.order_manager = order_manager
-
-
-    @staticmethod
-    def make_order(unit: Union[float, int], 
+    @classmethod
+    def make_order(cls,
+                   unit: Union[float, int], 
                    stop_loss: Optional[float], 
                    stop_profit: Optional[float],
                    action: str,
@@ -35,7 +26,6 @@ class Broker:
         
         entry_date = trading_date
         exit_date = None
-        # TODO: need to consider commission
         entry_price = trading_price
         exit_price = None
 
@@ -46,6 +36,7 @@ class Broker:
         elif action == 'short':
             stop_loss_price = trading_price * (1+stop_loss) if stop_loss is not None else None
             stop_profit_price = trading_price * (1-stop_profit) if stop_profit is not None else None
+
 
         else:
             entry_date = None
@@ -65,8 +56,21 @@ class Broker:
                       "exit_price": exit_price
                      }
         order = Order(**order_info)
-        PositionManager.add_position_from_order(order)
-        OrderManager.add_order(order)
+
+        cls.position_manager.add_position_from_order(order)
+
+        cls.order_manager.add_order(order)
+        
+        trading_turnover_value = trading_price * unit
+        cls.equity_manager.deal_with_cost_from_order(order, 
+                                                     abs(trading_turnover_value))
+
+        cls.equity_manager.equity += trading_turnover_value
+        trading_cost = order.commission_cost + order.tax_cost
+        cls.equity_manager.equity -= trading_cost
+        cls.equity_manager.add_to_queue()
+
+                                                
 
 
     def review_order(self, current_price, date: pd.Timestamp) -> None:
@@ -77,13 +81,13 @@ class Broker:
            from PositionManager
 
         """
-        the_last_order = PositionManager._order_in_position[-1]
-        in_position_orders = PositionManager._order_in_position[: -1]
+        the_last_order = self.position_manager._order_in_position[-1]
+        in_position_orders = self.position_manager._order_in_position[: -1]
 
         if (the_last_order.action == 'close' and 
-            PositionManager.status == 0):
+            self.position_manager.status == 0):
 
-            PositionManager.clear()
+            self.position_manager.clear()
         
         else:
         
@@ -108,8 +112,8 @@ class Broker:
 
     def liquidate_position(self, price: float, date: str) -> None:
 
-        current_position = PositionManager.status
-        ticker = PositionManager._order_in_position[-1].ticker
+        current_position = self.position_manager.status
+        ticker = self.position_manager._order_in_position[-1].ticker
 
         self.make_order(unit=-1*current_position,
                         stop_loss=None, 

@@ -12,6 +12,11 @@ from alphabt.accessor import Accessor
 from alphabt.report import Report
 
 
+from alphabt.order.manager import OrderManager
+from alphabt.position.manager import PositionManager
+from alphabt.equity.manager import EquityManager
+
+
 
 class Backtest:
     def __init__(self, strategy, commission=None) -> None:

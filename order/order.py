@@ -11,7 +11,9 @@ class Order:
                  entry_date: Optional[str] = None,
                  exit_date: Optional[str] = None,
                  entry_price: Optional[float] = None,
-                 exit_price: Optional[float] = None
+                 exit_price: Optional[float] = None,
+                 commission_cost: Optional[float] = None,
+                 tax_cost: Optional[float] = None
                  ):
         """
         @param action: type of action which include 'long'、'short' and 'close'
@@ -26,6 +28,8 @@ class Order:
         self.exit_date = exit_date
         self.entry_price = entry_price
         self.exit_price = exit_price
+        self.commission_cost = commission_cost
+        self.tax_cost = tax_cost
         
     
     def __repr__(self):
@@ -38,7 +42,9 @@ class Order:
                 'entry_price': self.entry_price,
                 'exit_price': self.exit_price,
                 'stop_loss_price': self.stop_loss_price,
-                'stop_profit_price': self.stop_profit_price
+                'stop_profit_price': self.stop_profit_price,
+                'commission_cost': self.commission_cost,
+                'tax_cost': self.tax_cost
                 }
     
         return f"""{info}""" 

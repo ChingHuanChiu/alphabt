@@ -48,12 +48,8 @@ class OrderManager:
                                 
                                 ]
             return reorganize_order
-        return 
+        return None
     
-    @staticmethod
-    def set_order_info(**info) -> Order:
-       
-       return Order(**info)
 
 
 
