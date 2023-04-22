@@ -1,45 +1,60 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
 
 import pandas as pd
 
 
 from plot import get_plotly
-from broker import *
 from alphabt import util
-from alphabt.strategy import Strategy, Equity
-from alphabt.accessor import Accessor
+from alphabt.strategy import Strategy
 from alphabt.report import Report
 
 
 from alphabt.order.manager import OrderManager
 from alphabt.position.manager import PositionManager
 from alphabt.equity.manager import EquityManager
+from alphabt.broker.broker import Broker
 
 
 
 class Backtest:
-    def __init__(self, strategy, commission=None) -> None:
-
-        Accessor.initial()
-        self.com = commission
-        if isinstance(strategy, Strategy):
-            self.Strategy = strategy
-        else:
-            self.Strategy = strategy()
-
-        self.data = util.reset_data(self.Strategy.data)
-        self.Broker = Broker(Equity(self.Strategy.init_capital), commission=self.com)
+    def __init__(self, 
+                 strategy: Strategy,
+                 initital_equity: float, 
+                 commission: Optional[float] = None,
+                 tax: Optional[float] = None) -> None:
 
 
-    
+        self.strategy = strategy
+        self.data = util.reset_data(self.strategy.data)
+        self.broker = Broker()
+        self.broker.position_manager = PositionManager
+        self.broker.order_manager = OrderManager
+        self.broker.equity_manager = EquityManager(initital_equity,
+                                                   commission,
+                                                   tax)
+
+
     def run(self) -> None:
-        self._back_test_loop(len(self.data), self.data.values, self.data.index, self.Strategy, self.Broker)
+        
+        data_length = self.data.shape[0]
+
+        for index in range(data_length - 1):
+            date, _open, high, low, close, volume, ticker = \
+                self.data[index]
+            
+            self.strategy.signal()
+            
+            self.broker.review_order(current_price=close,
+                                     date=date)
+
 
         # clean the last position
-    
-        if self.Strategy.position != 0:
-            self.Broker.liquidation(pos=self.Strategy.position, price=self.data.values[-1, :], date=self.data.index[-1] )
+        if self.broker.position_manager.status != 0:
+            self.broker.liquidate_position(price=self.data['close'][-1],
+                                           date=self.data['date'][-1])
+
+
 
 
     def get_report(self, benchmark='^GSPC', print_sharpe=True) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -56,13 +71,6 @@ class Backtest:
                    , overlap_param=overlap_param, log=log, callback=callback)
         
     
-    def _back_test_loop(self, data_length, data_values: np.array, data_index: pd.Timestamp, 
-                    strategy_class: Strategy, broker_class: Broker) -> None:
-        
-        for i in range(1, data_length - 1):
-            ohlc = data_values[i + 1, :4]
-            strategy_class.signal(i)
-            broker_class.check_order(ohlc, date=data_index[i + 1])
-
+  
 
 

@@ -21,7 +21,7 @@ class Broker:
                    action: str,
                    ticker: str,
                    trading_price: float,
-                   trading_date: str
+                   trading_date: pd.Timestamp
                    ) -> None:
         
         entry_date = trading_date
@@ -110,7 +110,7 @@ class Broker:
                                     trading_date=date)
                 
 
-    def liquidate_position(self, price: float, date: str) -> None:
+    def liquidate_position(self, price: float, date: pd.Timestamp) -> None:
 
         current_position = self.position_manager.status
         ticker = self.position_manager._order_in_position[-1].ticker

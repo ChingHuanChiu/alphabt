@@ -3,12 +3,11 @@ from typing import Union, Optional
 from abc import ABCMeta, abstractmethod
 
 # from alphabt.broker import Broker, Position
-from alphabt import taindicator
 from alphabt import statistic
 
-from order.manager import OrderManager
-from position.manager import PositionManager
-from broker.broker import Broker
+from alphabt.position.manager import PositionManager
+from alphabt.broker.broker import Broker
+from alphabt.common.talibindicator import indicator
 
 class Strategy(metaclass=ABCMeta):
 
@@ -26,10 +25,11 @@ class Strategy(metaclass=ABCMeta):
     def signal(self, index: int) -> None:
         """the main strategy logic
            NOTICE: need to super().signal() first when overide this method
+           # TODO: find the way to chechk if the signal method useing 'close' method and 'super().signal'
         """
         # trading at next day (index+1) if signal appear
         self.ticker = self.data["ticker"][index+1]
-        self.entry_price = self.data["close"][index+1]
+        self.entry_price = self.data["open"][index+1]
         self.entry_date = self.data["date"][index+1]
 
 
@@ -81,25 +81,22 @@ class Strategy(metaclass=ABCMeta):
 
     def indicator(self, name, timeperiod=None, return_info: bool=False, **parameters):
 
-        return taindicator.indicator(data=self.data, 
-                                     name=name,
-                                     timeperiod=timeperiod,
-                                     return_info=return_info,
-                                     **parameters
+        return indicator(data=self.data, 
+                         ame=name,
+                         timeperiod=timeperiod,
+                         return_info=return_info,
+                         **parameters
         )
-
-        # return statistic.indicator(self.data, name, timeperiod)
-
 
             
 
     @property
     def position(self):
-        return Position.status()
+        return PositionManager.status()
 
     @property
     def empty_position(self):
-        return Position.status() == 0
+        return PositionManager.status() == 0
 
     @property
     def long_position(self):
