@@ -9,7 +9,7 @@ class PositionManager:
     def status(cls) -> int:
         """the current status of position 
         """
-        return sum(order.unit for order in cls._order_in_position)
+        return sum(order.unit  for order in cls._order_in_position)
 
 
     @classmethod

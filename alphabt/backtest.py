@@ -48,7 +48,6 @@ class Backtest:
 
         # clean the last position
         if self.broker.position_manager.status() != 0:
-            print(222, self.broker.position_manager.status())
             self.broker.liquidate_position(price=self.data['close'][-1],
                                            date=self.data['date'][-1])
 

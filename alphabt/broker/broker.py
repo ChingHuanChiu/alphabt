@@ -78,7 +78,7 @@ class Broker:
                         order: Order,
                         ) -> None:
 
-        if order.action == "close":
+        if order.action == "close" and order.type != "stop_loss_profit":
 
             unit_list = [-o.unit for o in cls.position_manager._order_in_position[: -1]]
         
@@ -124,6 +124,9 @@ class Broker:
         else:
         
             for idx, in_position_order in enumerate(in_position_orders):
+
+                if in_position_order.action == 'close':
+                    continue
                 
                 if (StopLossCondition.match(trigger_price=in_position_order.stop_loss_price,
                                             current_price=current_price,
@@ -133,7 +136,9 @@ class Broker:
                                               current_price=current_price,
                                               direction=in_position_order.action)):
 
-                    pop_order = in_position_orders.pop(idx)
+                    pop_order = in_position_orders[idx]
+                    self.position_manager._order_in_position.remove(in_position_order)
+
 
                     self.make_order(unit=-pop_order.unit,
                                     stop_loss=None, 
@@ -149,11 +154,13 @@ class Broker:
 
         result = defaultdict(list)
 
+        print(len(self.order_manager._order_queue), len(self.equity_manager._equity_queue))
         for order, equity in zip(self.order_manager._order_queue,
                                  self.equity_manager._equity_queue):
             
-            
+            close, long = 0, 0
             if order.action == "close":
+
                 if (order.commission_cost is None)\
                     or (order.tax_cost is None):
                     trading_turnover_value = order.exit_price * order.unit
@@ -165,7 +172,6 @@ class Broker:
                 result['ExitCommission'].append(order.commission_cost)
                 result['Equity'].append(equity)
 
-
             else:
 
                 result['Ticket'].append(order.ticker)
@@ -174,6 +180,8 @@ class Broker:
                 result['EntryDate'].append(order.entry_date)
                 result['EntryPrice'].append(round(order.entry_price, 2))
                 result['EntryCommission'].append(order.commission_cost)
+  
+        print(close, long)
             
 
         return result
