@@ -48,6 +48,7 @@ class Backtest:
 
         # clean the last position
         if self.broker.position_manager.status() != 0:
+            print(222, self.broker.position_manager.status())
             self.broker.liquidate_position(price=self.data['close'][-1],
                                            date=self.data['date'][-1])
 
@@ -56,6 +57,8 @@ class Backtest:
     def get_report(self):
 
         result_dict = self.broker.get_result_with_processing_order()
+        self.broker.clean_queue()
+
 
         return pd.DataFrame(result_dict)
 

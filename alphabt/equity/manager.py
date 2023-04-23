@@ -31,7 +31,7 @@ class EquityManager:
 
     def add_to_queue(self) -> None:
 
-        self.__class__._equity_queue.append(self.equity)
+        self.__class__._equity_queue.append(round(self.equity, 3))
 
 
     def deal_with_cost_from_order(self,
@@ -42,7 +42,7 @@ class EquityManager:
             tax_cost = trading_turnover_value * self.tax
 
         else:
-            tax_cost = 0
+            tax_cost = 0.0
 
         commission_cost = trading_turnover_value * self.commission
 

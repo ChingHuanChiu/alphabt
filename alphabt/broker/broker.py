@@ -16,13 +16,14 @@ class Broker:
 
     @classmethod
     def make_order(cls,
-                   unit: Union[float, int], 
+                   unit: int, 
                    stop_loss: Optional[float], 
                    stop_profit: Optional[float],
                    action: str,
                    ticker: str,
                    trading_price: float,
-                   trading_date: pd.Timestamp
+                   trading_date: pd.Timestamp,
+                   type: str = 'normal'
                    ) -> None:
         
         entry_date = trading_date
@@ -34,7 +35,7 @@ class Broker:
 
         if action == 'long':
             stop_loss_price = trading_price * (1-stop_loss) if stop_loss is not None else None
-            stop_profit_price = trading_price * (1 + stop_profit) if stop_profit is not None else None
+            stop_profit_price = trading_price * (1+stop_profit) if stop_profit is not None else None
 
         elif action == 'short':
             stop_loss_price = trading_price * (1+stop_loss) if stop_loss is not None else None
@@ -57,30 +58,57 @@ class Broker:
                       "entry_date": entry_date,
                       "exit_date": exit_date,
                       "entry_price": entry_price,
-                      "exit_price": exit_price
+                      "exit_price": exit_price,
+                      "commission_cost": cls.equity_manager.commission,
+                      "tax_cost": cls.equity_manager.tax,
+                      "type": type
                      }
         order = Order(**order_info)
 
-        cls.position_manager.add_position_from_order(order)
+        if order.type == 'normal':
+            cls.position_manager.add_position_from_order(order)
 
         cls.order_manager.add_order(order)
+        cls._do_equity_work(trading_price, order)
+
+    
+    @classmethod
+    def _do_equity_work(cls, 
+                        trading_price: float,
+                        order: Order,
+                        ) -> None:
+
+        if order.action == "close":
+
+            unit_list = [-o.unit for o in cls.position_manager._order_in_position[: -1]]
         
-        trading_turnover_value = trading_price * unit
-        cls.equity_manager.deal_with_cost_from_order(order, 
-                                                     abs(trading_turnover_value))
+        else:
+            unit_list = [order.unit]
+        
+        for unit in unit_list:
+        
+            trading_turnover_value = trading_price * unit
+            cls.equity_manager.deal_with_cost_from_order(order, 
+                                                        abs(trading_turnover_value))
 
-        cls.equity_manager.equity += trading_turnover_value
-        trading_cost = order.commission_cost + order.tax_cost
-        cls.equity_manager.equity -= trading_cost
-        cls.equity_manager.add_to_queue()
+            cls.equity_manager.equity -= trading_turnover_value
+
+            trading_cost = order.commission_cost + order.tax_cost
+            cls.equity_manager.equity -= trading_cost
+
+            cls.equity_manager.add_to_queue()
 
 
-    def review_order(self, current_price, date: pd.Timestamp) -> None:
+    def review_order(self, 
+                     current_price, 
+                     date: pd.Timestamp) -> None:
+
         """review the orders which are in order_in_position queue, the following jobs:
         1. check the order if touch the stop_loss and stop_profit condiction
-           every single row data
+           every single row data, if match the condictions, pop the order from the 
+           in_position_orders queue and send a close order to  _order_queue.
         2. if the action of order is 'close' then clean the order_in_position queue
-           from PositionManager
+           from PositionManager.
 
         """
         if not self.position_manager._order_in_position:
@@ -88,14 +116,14 @@ class Broker:
 
         the_last_order = self.position_manager._order_in_position[-1]
         in_position_orders = self.position_manager._order_in_position[: -1]
-
+        
         if (the_last_order.action == 'close' and 
             self.position_manager.status() == 0):
             self.position_manager.clear()
         
         else:
         
-            for in_position_order in in_position_orders:
+            for idx, in_position_order in enumerate(in_position_orders):
                 
                 if (StopLossCondition.match(trigger_price=in_position_order.stop_loss_price,
                                             current_price=current_price,
@@ -104,30 +132,49 @@ class Broker:
                     StopProfitCondition.match(trigger_price=in_position_order.stop_profit_price,
                                               current_price=current_price,
                                               direction=in_position_order.action)):
-                    
-                    self.make_order(unit=-1*in_position_order.unit,
+
+                    pop_order = in_position_orders.pop(idx)
+
+                    self.make_order(unit=-pop_order.unit,
                                     stop_loss=None, 
                                     stop_profit=None,
                                     action='close',
-                                    ticker=in_position_order.ticker,
+                                    ticker=pop_order.ticker,
                                     trading_price=current_price,
-                                    trading_date=date)
+                                    trading_date=date,
+                                    type='stop_loss_profit')
 
-
+                
     def get_result_with_processing_order(self) -> Dict[str, List[Any]]:
 
         result = defaultdict(list)
-        for order in self.order_manager._order_queue:
 
-            result['Ticket'].append(order.ticker)
-            result['unit'].append(order.unit)
-            result['action'].append(order.action)
-            result['EntryDate'].append(order.entry_date)
-            result['EntryPrice'].append(order.entry_price)
-            result['ExitDate'].append(order.exit_date)
-            result['ExitPrice'].append(order.exit_price)
-            result['Commission'].append(order.commission_cost)
-            result['Tax'].append(order.tax_cost)
+        for order, equity in zip(self.order_manager._order_queue,
+                                 self.equity_manager._equity_queue):
+            
+            
+            if order.action == "close":
+                if (order.commission_cost is None)\
+                    or (order.tax_cost is None):
+                    trading_turnover_value = order.exit_price * order.unit
+                    self.equity_manager.deal_with_cost_from_order(order, abs(trading_turnover_value))
+
+                result['ExitDate'].append(order.exit_date)
+                result['ExitPrice'].append(round(order.exit_price, 2))
+                result['Tax'].append(order.tax_cost)
+                result['ExitCommission'].append(order.commission_cost)
+                result['Equity'].append(equity)
+
+
+            else:
+
+                result['Ticket'].append(order.ticker)
+                result['unit'].append(order.unit)
+                result['action'].append(order.action)
+                result['EntryDate'].append(order.entry_date)
+                result['EntryPrice'].append(round(order.entry_price, 2))
+                result['EntryCommission'].append(order.commission_cost)
+            
 
         return result
 
@@ -144,8 +191,12 @@ class Broker:
                         ticker=ticker,
                         trading_price=price,
                         trading_date=date)
-  
 
 
+    def clean_queue(self) -> None:
+
+        self.equity_manager._equity_queue.clear()
+        self.order_manager._order_queue.clear()
+        self.position_manager._order_in_position.clear()
 
     

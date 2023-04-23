@@ -70,7 +70,9 @@ class Strategy(metaclass=ABCMeta):
     def close(self) -> None:
         """close the position 
         """
-
+        if self.empty_position:
+            return None
+        
         Broker.make_order(unit=-1*PositionManager.status(), 
                           action='close',
                           ticker=self.ticker,

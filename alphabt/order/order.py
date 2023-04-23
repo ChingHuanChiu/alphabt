@@ -13,10 +13,12 @@ class Order:
                  entry_price: Optional[float] = None,
                  exit_price: Optional[float] = None,
                  commission_cost: Optional[float] = None,
-                 tax_cost: Optional[float] = None
+                 tax_cost: Optional[float] = None,
+                 type: str = 'normal'
                  ):
         """
-        @param action: type of action which include 'long'、'short' and 'close'
+        @param action: action of action which include 'long'、'short' and 'close'
+        @param type: type of order with 'normal' or 'stop_loss_profit'
         """
         
         self.ticker = ticker
@@ -30,6 +32,7 @@ class Order:
         self.exit_price = exit_price
         self.commission_cost = commission_cost
         self.tax_cost = tax_cost
+        self.type = type
         
     
     def __repr__(self):
@@ -44,7 +47,8 @@ class Order:
                 'stop_loss_price': self.stop_loss_price,
                 'stop_profit_price': self.stop_profit_price,
                 'commission_cost': self.commission_cost,
-                'tax_cost': self.tax_cost
+                'tax_cost': self.tax_cost,
+                'type': self.type
                 }
     
         return f"""{info}""" 
