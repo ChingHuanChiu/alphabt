@@ -11,6 +11,7 @@ from alphabt.position.manager import PositionManager
 from alphabt.equity.manager import EquityManager
 from alphabt.broker.broker import Broker
 from alphabt.report.report import Report
+from alphabt.common.plot import get_plotly
 
 
 
@@ -87,10 +88,11 @@ class Backtest:
         
 
 
-    # def get_plot(self, subplot_technical_index: list = None, overlap=None, sub_plot_param=None, overlap_param=None,
-    #              log=None, callback=None) -> None:
-    #     get_plotly(self.data, subplot_technical_index, overlap=overlap, sub_plot_param=sub_plot_param
-    #                , overlap_param=overlap_param, log=log, callback=callback)
+    def get_plot(self, subplot_technical_index: list = None, overlap=None, sub_plot_param=None, overlap_param=None,
+                 log=None, callback=None) -> None:
+
+        get_plotly(self.data, subplot_technical_index, overlap=overlap, sub_plot_param=sub_plot_param
+                   , overlap_param=overlap_param, log=log, callback=callback)
         
     
   

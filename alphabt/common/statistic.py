@@ -32,16 +32,16 @@ def get_roi(trading_log: pd.DataFrame) -> pd.Series:
             field = 'ExitPrice'
             
         invest_cost = data[field]
-        roi = (trading_log['profit($)'][0] / invest_cost) * 100
+        roi = (data['profit($)'] / invest_cost) * 100
 
         return roi
     return trading_log.apply(lambda x: _roi(x), axis=1)
 
 
+
 def get_accumulate_roi(trading_df: pd.DataFrame) -> pd.Series:
 
     return round((((trading_df['ROI(%)'] * 0.01) + 1).cumprod() - 1) * 100, 3)
-
 
 
 def annual_profit(record_df_year):
@@ -78,7 +78,7 @@ def profit_factor(record_df_year):
 
 def equity_return(log, init_equity):
     first = (log.Equity[0] - init_equity) / init_equity
-    return log.Equity.pct_change().fillna(value=first) * 100
+    return round(log.Equity.pct_change().fillna(value=first) * 100, 3)
 
 
 def max_loss(record_df_year):

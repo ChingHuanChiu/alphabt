@@ -155,7 +155,7 @@ class Broker:
 
         result = defaultdict(list)
 
-        print(len(self.order_manager._order_queue), len(self.equity_manager._equity_queue))
+        # print(len(self.order_manager._order_queue), len(self.equity_manager._equity_queue))
         current_id_of_sp_sl = 0
         amount_entry_order = 1
         for order, equity in zip(self.order_manager._order_queue,

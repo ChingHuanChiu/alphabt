@@ -96,37 +96,38 @@ def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param
                             subplot_titles=subplot_titles, specs=specs)
         _update_layout(fig)
         _main_fig(data=data, fig=fig, callback=callback)
-        date = pd.Index(np.where(log.KeepDay > 0, log.SellDate, log.BuyDate))
+        date = pd.Index(np.where(log.DurationDate > 0, log.ExitDate, log.EntryDate))
 
         _log = pd.DataFrame(index=data.index)
-        buy = pd.Series(log['BuyPrice'].values, index=log['BuyDate']).drop_duplicates().rename('BuyPrice')
-        sell = pd.Series(log['SellPrice'].values, index=log['SellDate']).drop_duplicates().rename('SellPrice')
+        buy = pd.Series(log['EntryPrice'].values, index=log['EntryDate']).drop_duplicates().rename('EntryPrice')
+        sell = pd.Series(log['ExitPrice'].values, index=log['ExitDate']).drop_duplicates().rename('ExitPrice')
         _log = pd.concat([buy, sell, _log], 1)
         try:
             
-            index_start_year = min(log['BuyDate'][0].year, log['SellDate'][0].year)
-            index_end_year = max(log['BuyDate'].iloc[-1].year, log['SellDate'].iloc[-1].year)
+            index_start_year = min(log['EntryDate'][0].year, log['ExitDate'][0].year)
+            index_end_year = max(log['EntryDate'].iloc[-1].year, log['ExitDate'].iloc[-1].year) + 1
             index_return = statistic.index_accumulate_return(str(index_start_year), str(index_end_year), index='^GSPC')
+
         except Exception as e:
             # TODO: catch the e message
             index_return = [0] * len(log)
 
 
-        fig.add_trace(go.Scatter(x=date, y=log['累積報酬率(%)'],
+        fig.add_trace(go.Scatter(x=date, y=log['AccumulateROI(%)'],
                                  mode='lines',
                                  name='累積報酬率(%)', ), row=2, col=1)
         fig.add_trace(go.Scatter(x=date,
-                                 y=index_return[log['SellDate']],
+                                 y=index_return[log['ExitDate']],
                                  mode='lines',
                                  name='大盤累積報酬率(%)', ), row=2, col=1)
 
-        fig.add_trace(go.Scatter(x=data.index, y=_log['BuyPrice'],
+        fig.add_trace(go.Scatter(x=data.index, y=_log['EntryPrice'],
                                  mode='markers',
-                                 name='Buydate'), row=1, col=1)
+                                 name='Entrydate'), row=1, col=1)
 
-        fig.add_trace(go.Scatter(x=data.index, y=_log['SellPrice'],
+        fig.add_trace(go.Scatter(x=data.index, y=_log['ExitPrice'],
                                  mode='markers',
-                                 name='Selldate'), row=1, col=1)
+                                 name='Exitdate'), row=1, col=1)
 
         fig.add_trace(go.Scatter(x=date, y=log['MDD(%)'] * -1, fill='tozeroy', name='MDD'), row=3, col=1)
         _subplot_indicator(subplot_technical_index, sub_plot_param, data, fig, row=4)
