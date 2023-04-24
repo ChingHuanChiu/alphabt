@@ -4,7 +4,7 @@
 
 Backtest the trading strategy on stocks and buy(sell) at next open price when the signal appears，the following features:
 
-- long stock and also can short stock
+- Only for long strategy so far
 - stop loss
 - stop profit
 - TaLib feature
@@ -12,8 +12,7 @@ Backtest the trading strategy on stocks and buy(sell) at next open price when th
 # Strategy Method and Property
 
 - close_position() : when you want to close the position
-- buy() : buy action
-- sell() : sell action
+- long() : buy action
 - long_position -> Boolean: in long position
 - short_position -> Boolean: in short position
 - empty_position -> Boolean: in empty position 
@@ -44,6 +43,8 @@ class TEMA(Strategy):
 
 
     def signal(self, index):
+
+        super().signal(index)
         # Only buy the stock with empty position
         if (self.tema_8[index] > self.tema_13[index]) & (self.empty_position):
             self.buy()
@@ -51,7 +52,7 @@ class TEMA(Strategy):
         if (self.tema_13[index] > self.tema_8[index]) & (self.long_position):
             self.close_position()
 
-bt = Backtest(TEMA, commission=None)
+bt = Backtest(TEMA, , initial_equity=10000, commission=None)
 bt.run()
 log, per = bt.get_report()
 
@@ -72,26 +73,4 @@ Bt(TEMA).get_plot(subplot_technical_index=['MA'], overlap=['TEMA'], sub_plot_par
 
     ![newplot](https://user-images.githubusercontent.com/51486531/109655384-2d4cf700-7b9e-11eb-8f0e-6e71a47efe13.png)
 
-- Strategy (both long and short direction)
-```python
-class CCI(Strategy):
-    def __init__(self):
-        # input your data
-        self.data = data
-        self.init_capital = 10000
-        self.cci = self.indicator('CCI')
-
-    def signal(self, index):
-
-        if (self.cci['CCI'][index] > -100) & (self.cci['CCI'][index - 1] < -100) & (not self.long_position):
-            #先將做空部位買回，再做多
-            if self.short_position:
-                self.close_position()
-            self.buy(unit=1, stop_loss=0.1, stop_profit=0.1)
-        if (self.cci['CCI'][index] < 100) & (self.cci['CCI'][index - 1] > 100) & (not self.short_position):
-            # 先賣出多頭部位，再做空
-            if self.long_position:
-                self.close_position()
-            self.sell(unit=-1)   
-```
 

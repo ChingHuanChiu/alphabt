@@ -49,22 +49,22 @@ class Strategy(metaclass=ABCMeta):
                           )
 
 
-    def short(self, 
-              unit: Union[int, float] = None, 
-              stop_loss: Optional[float] = None, 
-              stop_profit: Optional[float] = None) -> None:
+    # def short(self, 
+    #           unit: Union[int, float] = None, 
+    #           stop_loss: Optional[float] = None, 
+    #           stop_profit: Optional[float] = None) -> None:
         
-        if unit is None:
-            unit =  -1
+    #     if unit is None:
+    #         unit =  -1
 
-        Broker.make_order(unit=unit, 
-                          stop_loss=stop_loss, 
-                          stop_profit=stop_profit,
-                          action='short',
-                          ticker=self.ticker,
-                          trading_price = self.next_date_price,
-                          trading_date=self.next_date
-                          )
+    #     Broker.make_order(unit=unit, 
+    #                       stop_loss=stop_loss, 
+    #                       stop_profit=stop_profit,
+    #                       action='short',
+    #                       ticker=self.ticker,
+    #                       trading_price = self.next_date_price,
+    #                       trading_date=self.next_date
+    #                       )
 
 
     def close(self) -> None:

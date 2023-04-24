@@ -57,13 +57,12 @@ class Backtest:
 
         
 
-    def get_trading_log(self) -> pd.DataFrame:
+    def get_trading_log(self) :
 
         result_dict = self.broker.get_result_with_processing_order()
-        self.broker.clean_queue()
 
 
-        return pd.DataFrame(result_dict)
+        return result_dict
 
 
     def get_report(self, 

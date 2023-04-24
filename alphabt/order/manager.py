@@ -14,6 +14,7 @@ class OrderManager:
         reorganize_order_list = cls().reorganize_order()
 
         if reorganize_order_list is not None:
+            # print(len(reorganize_order_list))
 
             cls._order_queue.extend(reorganize_order_list)
         else:

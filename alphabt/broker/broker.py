@@ -117,7 +117,7 @@ class Broker:
 
         the_last_order = self.position_manager._order_in_position[-1]
         in_position_orders = self.position_manager._order_in_position[: -1]
-        
+
         if (the_last_order.action == 'close' and 
             self.position_manager.status() == 0):
             self.position_manager.clear()
@@ -155,7 +155,7 @@ class Broker:
 
         result = defaultdict(list)
 
-        
+        print(len(self.order_manager._order_queue), len(self.equity_manager._equity_queue))
         current_id_of_sp_sl = 0
         amount_entry_order = 1
         for order, equity in zip(self.order_manager._order_queue,
