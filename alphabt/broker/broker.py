@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Union, List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any
 
 import pandas as pd
 
@@ -218,7 +218,7 @@ class Broker:
                         trading_date=date)
 
 
-    def clean_queue(self) -> None:
+    def initial_queue(self) -> None:
 
         self.equity_manager._equity_queue.clear()
         self.order_manager._order_queue.clear()

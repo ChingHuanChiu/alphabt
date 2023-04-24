@@ -1,15 +1,13 @@
-from sys import path
 
-path.extend(['./', './alphabt'])
-import warnings
-
-warnings.filterwarnings('ignore')
 import numpy as np
 import plotly.graph_objects as go
-import statistic
 import pandas as pd
-import taindicator
 from plotly.subplots import make_subplots
+
+
+from alphabt.common import statistic, talibindicator 
+
+
 
 
 def add_trace(fig, tech_df, row):
@@ -60,15 +58,15 @@ def _subplot_indicator(subplot_technical_index, sub_plot_param, data, fig, row):
                 try:
                     df_list = []
                     for timeperiod in sub_plot_param[ind]:
-                        _df = taindicator.indicator(data=data, name=ind, timeperiod=timeperiod)
+                        _df = talibindicator .indicator(data=data, name=ind, timeperiod=timeperiod)
                         _df.columns = [f"{timeperiod}{ind}"]
                         df_list.append(_df)
                     df = pd.concat(df_list, 1)
                 except:
-                    df = taindicator.indicator(data=data, name=ind)
+                    df = talibindicator .indicator(data=data, name=ind)
 
             else:
-                df = taindicator.indicator(data=data, name=ind)
+                df = talibindicator.indicator(data=data, name=ind)
 
             add_trace(fig, df, row=row + n)
 
@@ -153,12 +151,12 @@ def get_plotly(data, subplot_technical_index: list, overlap=None, sub_plot_param
             if overlap_param is not None:
                 # overlappara={'MA': [5, 10, 20]}
                 for timeperiod in overlap_param[ind]:
-                    _df = taindicator.indicator(data=data, name=ind, timeperiod=timeperiod)
+                    _df = talibindicator .indicator(data=data, name=ind, timeperiod=timeperiod)
                     _df.columns = [f"{timeperiod}{ind}"]
                     add_trace(fig, _df, row=1)
             else:
 
-                add_trace(fig, taindicator.indicator(data=data, name=ind), row=1)
+                add_trace(fig, talibindicator.indicator(data=data, name=ind), row=1)
 
     fig.show()
 

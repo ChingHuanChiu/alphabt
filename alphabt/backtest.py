@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 
 
 import pandas as pd
@@ -10,6 +10,7 @@ from alphabt.order.manager import OrderManager
 from alphabt.position.manager import PositionManager
 from alphabt.equity.manager import EquityManager
 from alphabt.broker.broker import Broker
+from alphabt.report.report import Report
 
 
 
@@ -23,6 +24,7 @@ class Backtest:
 
         self.strategy = strategy()
         self.data = util.reset_data(self.strategy.data)
+        self.initial_capital = initital_equity
 
         self.broker = Broker()
         self.broker.__class__.position_manager = PositionManager()
@@ -30,6 +32,8 @@ class Backtest:
         self.broker.__class__.equity_manager = EquityManager(initital_equity,
                                                              commission,
                                                              tax)
+        self.broker.initial_queue()
+
 
 
     def run(self) -> None:
@@ -53,7 +57,7 @@ class Backtest:
 
         
 
-    def get_report(self):
+    def get_trading_log(self) -> pd.DataFrame:
 
         result_dict = self.broker.get_result_with_processing_order()
         self.broker.clean_queue()
@@ -62,14 +66,26 @@ class Backtest:
         return pd.DataFrame(result_dict)
 
 
+    def get_report(self, 
+                   with_yearly_report: bool = True) -> Union[pd.DataFrame, Tuple[pd.DataFrame]]:
 
+        result_dict = self.broker.get_result_with_processing_order()
+        trading_log = pd.DataFrame(result_dict)
+        
 
-    # def get_report(self, benchmark='^GSPC', print_sharpe=True) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    #     """Get the trading report and yearly report from trading log
-    #     """
-    #     trading_log = self.Broker.get_log()
-    #     report, performance = Report(self.data, trading_log, self.Strategy.init_capital, print_sharpe).result(benchmark)
-    #     return report, performance
+        repoter = Report(self.data, trading_log, self.initial_capital, True)
+        trading_report = repoter.get_trading_report()
+        if trading_report is None:
+            print('There is no trading signal in your strategy')
+            return pd.DataFrame([])
+
+        if with_yearly_report:    
+            yearly_report = repoter.get_yearly_report(benchmark='^GSPC', 
+                                                      trading_report=trading_report)
+            return trading_report, yearly_report
+        
+        return trading_report
+        
 
 
     # def get_plot(self, subplot_technical_index: list = None, overlap=None, sub_plot_param=None, overlap_param=None,

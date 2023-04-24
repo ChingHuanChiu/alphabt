@@ -1,24 +1,59 @@
-from sys import path
-path.extend(['./'])
+from typing import List
+
 import numpy as np
 import pandas as pd
 from talib import abstract
-from typing import List
+
 
 from data.data import Data
+
+def get_profit(trading_log: pd.DataFrame) -> pd.Series:
+
+    def _profit(data):
+        res = data['ExitPrice'] - data['EntryPrice']
+
+        if data['action'] == 'long':
+            profit = res * data['unit']
+
+        elif data['action'] == 'short':
+            profit = -res * data['unit']
+        return profit
+        
+
+    return trading_log.apply(lambda x: _profit(x), axis=1)
+
+
+def get_roi(trading_log: pd.DataFrame) -> pd.Series:
+
+    def _roi(data):
+        if data['action'] == 'long':
+            field = 'EntryPrice'
+        elif data['action'] == 'short':
+            field = 'ExitPrice'
+            
+        invest_cost = data[field]
+        roi = (trading_log['profit($)'][0] / invest_cost) * 100
+
+        return roi
+    return trading_log.apply(lambda x: _roi(x), axis=1)
+
+
+def get_accumulate_roi(trading_df: pd.DataFrame) -> pd.Series:
+
+    return round((((trading_df['ROI(%)'] * 0.01) + 1).cumprod() - 1) * 100, 3)
 
 
 
 def annual_profit(record_df_year):
-    return [round((record_df_year['profit(元)'].sum()), 2)]
+    return [round((record_df_year['profit($)'].sum()), 2)]
 
 
-def buy_times(record_df_year):
-    return [round(len(record_df_year[record_df_year.BuyDate < record_df_year.SellDate]))]
+def long_times(record_df_year):
+    return [round(len(record_df_year[record_df_year.EntryDate < record_df_year.ExitDate]))]
 
 
-def sell_times(record_df_year):
-    return [round(len(record_df_year[record_df_year.BuyDate > record_df_year.SellDate]))]
+def short_times(record_df_year):
+    return [round(len(record_df_year[record_df_year.EntryDate > record_df_year.ExitDate]))]
 
 
 def trade_times(record_df_year):
@@ -26,12 +61,12 @@ def trade_times(record_df_year):
 
 
 def win_rate(record_df_year):
-    return [round((len(record_df_year[record_df_year['profit(元)'] > 0]) / len(record_df_year)) * 100, 2)]
+    return [round((len(record_df_year[record_df_year['profit($)'] > 0]) / len(record_df_year)) * 100, 2)]
 
 
 def profit_factor(record_df_year):
-    profit = record_df_year[record_df_year['profit(元)'] > 0]['profit(元)'].sum()
-    loss = -(record_df_year[record_df_year['profit(元)'] < 0]['profit(元)'].sum())
+    profit = record_df_year[record_df_year['profit($)'] > 0]['profit($)'].sum()
+    loss = -(record_df_year[record_df_year['profit($)'] < 0]['profit($)'].sum())
 
     if loss != 0:
         pf = profit / loss
@@ -41,18 +76,13 @@ def profit_factor(record_df_year):
     return [round(pf, 3)]
 
 
-def equity(log, init_equity):
-    eq = log['profit(元)'].cumsum() + init_equity
-    return eq
-
-
 def equity_return(log, init_equity):
     first = (log.Equity[0] - init_equity) / init_equity
     return log.Equity.pct_change().fillna(value=first) * 100
 
 
 def max_loss(record_df_year):
-    max_loss = round(record_df_year[record_df_year['profit(元)'] < 0]['profit(元)'].min(), 0)
+    max_loss = round(record_df_year[record_df_year['profit($)'] < 0]['profit($)'].min(), 0)
     if np.isnan(max_loss):
         max_loss = 0
     return [max_loss]
@@ -64,7 +94,7 @@ def stock_max_loss(data, year):
 
 
 def max_profit(record_df_year):
-    mp = round(record_df_year[record_df_year['profit(元)'] > 0]['profit(元)'].max(), 0)
+    mp = round(record_df_year[record_df_year['profit($)'] > 0]['profit($)'].max(), 0)
     if np.isnan(mp):
         mp = 0
     return [mp]
@@ -100,7 +130,7 @@ def cum_year_return(record_df, count, field: str):
 
 
 def cum_equity(record_df, count):
-    cum_equity = round(record_df['profit(元)'].cumsum()[count - 1], 2)
+    cum_equity = round(record_df['profit($)'].cumsum()[count - 1], 2)
     return [cum_equity]
 
 
@@ -114,8 +144,8 @@ def mdd(df, log):
     mdd_list = []
 
     for d in range(len(log)):
-        start = log['BuyDate'][d]
-        end = log['SellDate'][d]
+        start = log['EntryDate'][d]
+        end = log['ExitDate'][d]
 
         if start < end:
             dd = (df[start:end]['close'].cummax() - df[start:end]['close']).max() / df[start:end]['close'].max()
@@ -181,57 +211,5 @@ def index_geo_yearly_ret(df, index='^GSPC'):
 
     return pd.DataFrame(list(geo_ret_dict.values()),
                         index=list(geo_ret_dict.keys()), columns=['大盤年化報酬率(%)'])
-
-
-# def indicator(data, name: str, timeperiod: List[int] = None):
-#     """
-
-#     :param data: stock data with "close", "open", "high", "low", "volume"
-#     :param name: function name of TA-Lib package
-#     :param timeperiod: parameter of TA-Lib method
-#     :return:
-#     """
-
-#     OHLCV = {'open':   data['open'],
-#              'high':   data['high'],
-#              'low':    data['low'],
-#              'close':  data['close'],
-#              'volume': data['volume']
-#              }
-
-#     ret = pd.DataFrame(index=data.index)
-#     f = getattr(abstract, name)
-#     output_names = f.output_names
-
-#     if timeperiod is not None:
-#         for t in timeperiod:
-
-#             s = f(OHLCV, timeperiod=t)
-#             s = pd.to_numeric(s, errors='coerce')
-
-#             if len(output_names) == 1:
-#                 dic = s
-#                 s_df = pd.DataFrame(dic, index=data.index,
-#                                     columns=['{}'.format(t) + name])  # 當output_names=1時，s為array
-#             else:
-#                 s = s.T
-#                 output_names_col = [f'{n}_{str(t)}' for n in output_names]
-#                 s_df = pd.DataFrame(s, index=data.index, columns=output_names_col)  # 當output_names>1時，s為list
-#             ret = pd.concat([ret, s_df], axis=1)
-#     else:
-
-#         s = f(OHLCV)
-#         s = pd.to_numeric(s, errors='coerce')
-#         if len(output_names) == 1:
-#             dic = s
-#             s_df = pd.DataFrame(dic, index=data.index, columns=[name])
-#         else:
-#             s = s.T
-#             s_df = pd.DataFrame(s, index=data.index, columns=output_names)
-
-#         ret = pd.concat([ret, s_df], axis=1)
-#     return ret
-
-
 
 
