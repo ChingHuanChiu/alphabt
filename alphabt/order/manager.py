@@ -7,9 +7,11 @@ from alphabt.position.manager import PositionManager
 class OrderManager:
 
     _order_queue = []
+    # _stop_loss_profit_order_queue = []
 
     @classmethod
     def add_order(cls, order: Order) -> None:
+
         reorganize_order_list = cls().reorganize_order()
 
         if reorganize_order_list is not None:

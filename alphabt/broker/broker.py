@@ -79,7 +79,8 @@ class Broker:
                         ) -> None:
 
         if order.action == "close" and order.type != "stop_loss_profit":
-
+            
+            # with overweight position
             unit_list = [-o.unit for o in cls.position_manager._order_in_position[: -1]]
         
         else:
@@ -125,8 +126,6 @@ class Broker:
         
             for idx, in_position_order in enumerate(in_position_orders):
 
-                if in_position_order.action == 'close':
-                    continue
                 
                 if (StopLossCondition.match(trigger_price=in_position_order.stop_loss_price,
                                             current_price=current_price,
@@ -137,6 +136,8 @@ class Broker:
                                               direction=in_position_order.action)):
 
                     pop_order = in_position_orders[idx]
+                    setattr(pop_order, 'type', 'stop_loss_profit')
+
                     self.position_manager._order_in_position.remove(in_position_order)
 
 
@@ -154,11 +155,13 @@ class Broker:
 
         result = defaultdict(list)
 
-        print(len(self.order_manager._order_queue), len(self.equity_manager._equity_queue))
+        
+        current_id_of_sp_sl = 0
+        amount_entry_order = 1
         for order, equity in zip(self.order_manager._order_queue,
                                  self.equity_manager._equity_queue):
             
-            close, long = 0, 0
+
             if order.action == "close":
 
                 if (order.commission_cost is None)\
@@ -166,23 +169,37 @@ class Broker:
                     trading_turnover_value = order.exit_price * order.unit
                     self.equity_manager.deal_with_cost_from_order(order, abs(trading_turnover_value))
 
+
                 result['ExitDate'].append(order.exit_date)
                 result['ExitPrice'].append(round(order.exit_price, 2))
                 result['Tax'].append(order.tax_cost)
                 result['ExitCommission'].append(order.commission_cost)
                 result['Equity'].append(equity)
 
-            else:
+                current_id_of_sp_sl = amount_entry_order
 
-                result['Ticket'].append(order.ticker)
-                result['unit'].append(order.unit)
-                result['action'].append(order.action)
-                result['EntryDate'].append(order.entry_date)
-                result['EntryPrice'].append(round(order.entry_price, 2))
-                result['EntryCommission'].append(order.commission_cost)
-  
-        print(close, long)
-            
+            else:
+                amount_entry_order += 1
+
+                if order.type == "stop_loss_profit":
+
+                    result['Ticket'].insert(current_id_of_sp_sl, order.ticker)
+                    result['unit'].insert(current_id_of_sp_sl, order.unit)
+                    result['action'].insert(current_id_of_sp_sl, order.action)
+                    result['EntryDate'].insert(current_id_of_sp_sl, order.entry_date)
+                    result['EntryPrice'].insert(current_id_of_sp_sl, round(order.entry_price, 2))
+                    result['EntryCommission'].insert(current_id_of_sp_sl, order.commission_cost)
+                    result['Type'].insert(current_id_of_sp_sl, order.type)
+                    current_id_of_sp_sl += 1
+                    
+                else:
+                    result['Ticket'].append(order.ticker)
+                    result['unit'].append(order.unit)
+                    result['action'].append(order.action)
+                    result['EntryDate'].append(order.entry_date)
+                    result['EntryPrice'].append(round(order.entry_price, 2))
+                    result['EntryCommission'].append(order.commission_cost)
+                    result['Type'].append(order.type)
 
         return result
 
