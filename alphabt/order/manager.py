@@ -28,7 +28,8 @@ class OrderManager:
         the_newest_order_action = the_newest_order.action
 
 
-        if the_newest_order_action == 'close' :
+        if (the_newest_order_action == 'close') and \
+           (abs(the_newest_order.unit) >= 2):
 
             ticker = the_newest_order.ticker
             close_price = the_newest_order.exit_price

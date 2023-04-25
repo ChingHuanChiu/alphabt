@@ -105,7 +105,7 @@ class Broker:
                      date: pd.Timestamp) -> None:
 
         """review the orders which are in order_in_position queue, the following jobs:
-        1. check the order if touch the stop_loss and stop_profit condiction
+        1. check the order if touch the stop_loss or stop_profit condiction at
            every single row data, if match the condictions, pop the order from the 
            in_position_orders queue and send a close order to  _order_queue.
         2. if the action of order is 'close' then clean the order_in_position queue
