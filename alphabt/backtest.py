@@ -40,13 +40,12 @@ class Backtest:
     def run(self) -> None:
         
         data_length = self.data.shape[0]
-
         for index in range(data_length - 1):
             date, _open, high, low, close, volume, ticker = \
                 self.data.iloc[index]
             
             self.strategy.signal(index)
-            
+
             self.broker.review_order(current_price=close,
                                      date=date)
 
@@ -58,7 +57,7 @@ class Backtest:
 
         
 
-    def get_trading_log(self) :
+    def get_trading_log(self):
 
         result_dict = self.broker.get_result_with_processing_order()
 

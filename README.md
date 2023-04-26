@@ -4,7 +4,8 @@
 
 Backtest the stock with long strategy or short strategy，the following features:
 
-- long strategy or short strategy so far
+- long strategy or short strategy 
+- long-short strategy 
 - stop loss
 - stop profit
 - TaLib feature
@@ -73,6 +74,7 @@ Bt(TEMA).get_plot(subplot_technical_index=['MA'], overlap=['TEMA'], sub_plot_par
 
 # TODO
 
-1. Add feature that accept long action and short action within a single strategy
-   i.e. the situation like the in_position_queue : [buy, close, sell] must be solved
-2. Unit Test 
+1. Defensive programmingfeature such as equity
+2. Test 
+3. bug with plot moduel: when the DurationDate is equal to 'zero'
+4. portfolio

@@ -4,6 +4,7 @@ from abc import ABCMeta, abstractmethod
 
 
 from alphabt.position.manager import PositionManager
+from alphabt.equity.manager import EquityManager
 from alphabt.broker.broker import Broker
 from alphabt.common.talibindicator import indicator
 
@@ -38,6 +39,10 @@ class Strategy(metaclass=ABCMeta):
         
         if unit is None:
             unit = 1
+        
+        if self.short_position:
+            # 做多平倉
+            self.close(False)
 
         Broker.make_order(unit=unit, 
                           stop_loss=stop_loss, 
@@ -57,17 +62,21 @@ class Strategy(metaclass=ABCMeta):
         if unit is None:
             unit =  -1
 
+        if self.long_position:
+            # 做空平倉
+            self.close(False)
+
         Broker.make_order(unit=unit, 
                           stop_loss=stop_loss, 
                           stop_profit=stop_profit,
                           action='short',
                           ticker=self.ticker,
                           trading_price = self.next_date_price,
-                          trading_date=self.next_date
+                          trading_date=self.next_date,
                           )
 
 
-    def close(self) -> None:
+    def close(self, send_to_queue_when_overweight: bool = True) -> None:
         """close the position 
         """
         if self.empty_position:
@@ -79,7 +88,8 @@ class Strategy(metaclass=ABCMeta):
                           stop_loss=None, 
                           stop_profit=None,
                           trading_price = self.next_date_price,
-                          trading_date=self.next_date
+                          trading_date=self.next_date,
+                          send_to_queue_when_overweight=send_to_queue_when_overweight
                           )
    
 
@@ -93,21 +103,29 @@ class Strategy(metaclass=ABCMeta):
         )
 
             
-
     @property
-    def position(self):
+    def position(self) -> int:
         return PositionManager.status()
 
+
     @property
-    def empty_position(self):
+    def empty_position(self) -> bool:
         return PositionManager.status() == 0
 
-    @property
-    def long_position(self):
-        return PositionManager.status() > 0
 
     @property
-    def short_position(self):
+    def long_position(self) -> bool:
+        return PositionManager.status() > 0
+
+
+    @property
+    def short_position(self) -> bool:
         return PositionManager.status() < 0
+
+    @property
+    def equity(self) -> float:
+
+        return EquityManager.equity
+
     
 

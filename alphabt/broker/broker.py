@@ -23,8 +23,13 @@ class Broker:
                    ticker: str,
                    trading_price: float,
                    trading_date: pd.Timestamp,
-                   type: str = 'normal'
+                   type: str = 'normal',
+                   send_to_queue_when_overweight: bool = True
                    ) -> None:
+        """@param send_to_queue_when_overweight : to deal with the situation of creating more than one Order at same time(overweight strategy),
+                                                  which happened to the long-short strategy. It will not be send to order queue
+                                                  when 'False' is set
+        """
         
         entry_date = trading_date
         exit_date = None
@@ -67,8 +72,7 @@ class Broker:
 
         if order.type == 'normal':
             cls.position_manager.add_position_from_order(order)
-
-        cls.order_manager.add_order(order)
+        cls.order_manager.add_order(order, send_to_queue_when_overweight)
         cls._do_equity_work(trading_price, order)
 
     
@@ -101,61 +105,57 @@ class Broker:
 
 
     def review_order(self, 
-                     current_price, 
-                     date: pd.Timestamp) -> None:
+                        current_price, 
+                        date: pd.Timestamp) -> None:
 
-        """review the orders which are in order_in_position queue, the following jobs:
-        1. check the order if touch the stop_loss or stop_profit condiction at
-           every single row data, if match the condictions, pop the order from the 
-           in_position_orders queue and send a close order to  _order_queue.
-        2. if the action of order is 'close' then clean the order_in_position queue
-           from PositionManager.
+            """review the orders which are in order_in_position queue, the following jobs:
+            1. check the order if touch the stop_loss or stop_profit condiction at
+            every single row data, if match the condictions, pop the order from the 
+            in_position_orders queue and send a close order to  _order_queue.
+            2. if the action of order is 'close' then clean the order_in_position queue
+            from PositionManager.
 
-        """
-        if not self.position_manager._order_in_position:
-            return None
+            """
+            if not self.position_manager._order_in_position:
+                return None
 
-        the_last_order = self.position_manager._order_in_position[-1]
-        in_position_orders = self.position_manager._order_in_position[: -1]
+            in_position_orders = self.position_manager._order_in_position
+            action_in_positon_orders = [o.action for o in in_position_orders]
 
-        if (the_last_order.action == 'close' and 
-            self.position_manager.status() == 0):
-            self.position_manager.clear()
-        
-        else:
-        
             for idx, in_position_order in enumerate(in_position_orders):
 
-                
-                if (StopLossCondition.match(trigger_price=in_position_order.stop_loss_price,
+                if (in_position_order.action == 'close'
+                    and in_position_order.type != 'stop_loss_profit'):
+                    self.position_manager.close()
+                    
+
+                elif ((StopLossCondition.match(trigger_price=in_position_order.stop_loss_price,
                                             current_price=current_price,
                                             direction=in_position_order.action) or
 
-                    StopProfitCondition.match(trigger_price=in_position_order.stop_profit_price,
-                                              current_price=current_price,
-                                              direction=in_position_order.action)):
-
-                    pop_order = in_position_orders[idx]
-                    setattr(pop_order, 'type', 'stop_loss_profit')
-
-                    self.position_manager._order_in_position.remove(in_position_order)
-
-
-                    self.make_order(unit=-pop_order.unit,
-                                    stop_loss=None, 
-                                    stop_profit=None,
-                                    action='close',
-                                    ticker=pop_order.ticker,
-                                    trading_price=current_price,
-                                    trading_date=date,
-                                    type='stop_loss_profit')
+                       StopProfitCondition.match(trigger_price=in_position_order.stop_profit_price,
+                                                current_price=current_price,
+                                                direction=in_position_order.action))) and\
+                       ('close' not in action_in_positon_orders):
+                    
+                        pop_order = in_position_orders[idx]
+                        setattr(pop_order, 'type', 'stop_loss_profit')
+                        self.position_manager._order_in_position.remove(in_position_order)
+                
+                        self.make_order(unit=-pop_order.unit,
+                                        stop_loss=None, 
+                                        stop_profit=None,
+                                        action='close',
+                                        ticker=pop_order.ticker,
+                                        trading_price=current_price,
+                                        trading_date=date,
+                                        type='stop_loss_profit')
 
                 
     def get_result_with_processing_order(self) -> Dict[str, List[Any]]:
 
         result = defaultdict(list)
 
-        # print(len(self.order_manager._order_queue), len(self.equity_manager._equity_queue))
         current_id_of_sp_sl = 0
         amount_entry_order = 1
         for order, equity in zip(self.order_manager._order_queue,
